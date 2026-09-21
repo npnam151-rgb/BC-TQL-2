@@ -1,7 +1,9 @@
 import React, { forwardRef } from 'react';
 import {
   STORES,
-  REPORT_GROUPS,
+  SYSTEM_REPORT_GROUP,
+  SYSTEM_COLUMNS,
+  STORE_REPORT_GROUPS,
   TQLReportData,
   StoreReportValues,
 } from '../types';
@@ -102,6 +104,15 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                 >
                   Người báo cáo
                 </th>
+                {/* 1. Đánh giá chung toàn chuỗi (7 cột con) */}
+                <th
+                  colSpan={SYSTEM_COLUMNS.length}
+                  className="p-2 text-center font-extrabold uppercase border-r border-slate-400 tracking-wider bg-slate-100 align-middle"
+                >
+                  {SYSTEM_REPORT_GROUP.title}
+                </th>
+
+                {/* 2. CH lv chính (Đưa về SAU Đánh giá chung toàn chuỗi theo yêu cầu) */}
                 <th
                   rowSpan={2}
                   className="p-2 border-r border-slate-400 text-center font-bold align-middle w-[85px] min-w-[85px]"
@@ -109,8 +120,8 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                   CH lv chính
                 </th>
 
-                {/* Group Headers */}
-                {REPORT_GROUPS.map((group) => {
+                {/* 3. Nhóm nghiệp vụ từng cơ sở */}
+                {STORE_REPORT_GROUPS.map((group) => {
                   const isSingleColGroup =
                     group.key === 'dao_tao' || group.key === 'doi_ngoai';
 
@@ -127,9 +138,20 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                 })}
               </tr>
 
-              {/* Header Row 2: Sub-columns for groups with multiple columns */}
+              {/* Header Row 2: Sub-columns */}
               <tr className="bg-slate-50 text-slate-800 text-[11px] font-semibold divide-x divide-slate-400 border-b border-slate-400">
-                {REPORT_GROUPS.map((group) => {
+                {/* 7 Cột con của Đánh giá chung toàn chuỗi */}
+                {SYSTEM_COLUMNS.map((col) => (
+                  <th
+                    key={col.id}
+                    className="p-2 border-r border-slate-400 align-top font-semibold leading-snug break-words min-w-[95px] max-w-[125px] text-center"
+                  >
+                    {col.header}
+                  </th>
+                ))}
+
+                {/* Cột con của các nhóm cơ sở */}
+                {STORE_REPORT_GROUPS.map((group) => {
                   if (group.key === 'dao_tao' || group.key === 'doi_ngoai') {
                     return null;
                   }
@@ -137,7 +159,7 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                   return group.columns.map((col) => (
                     <th
                       key={col.id}
-                      className="p-2 border-r border-slate-400 text-left align-top font-semibold min-w-[110px] max-w-[150px] leading-snug break-words"
+                      className="p-2 border-r border-slate-400 align-top font-semibold leading-snug break-words min-w-[110px] max-w-[150px] text-left"
                     >
                       {col.header}
                     </th>
@@ -189,19 +211,41 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                       </td>
                     )}
 
-                    {/* Column 4: CH lv chính (Mỗi dòng là một cơ sở) */}
+                    {/* 7 Cột ĐÁNH GIÁ CHUNG TOÀN CHUỖI: Gộp ô (rowSpan = 6) xuyên suốt toàn bộ 6 cơ sở, đặt TRƯỚC CH lv chính */}
+                    {idx === 0 &&
+                      SYSTEM_COLUMNS.map((col) => {
+                        const sysValue =
+                          data.systemEvaluation?.[col.id] ||
+                          storeVals[col.id] ||
+                          '';
+                        return (
+                          <td
+                            key={col.id}
+                            rowSpan={storesToRender.length}
+                            className="p-2.5 text-center align-middle border-r border-slate-400 text-slate-900 text-[11px] leading-relaxed break-words font-semibold bg-white min-w-[95px] max-w-[125px]"
+                          >
+                            {sysValue ? (
+                              <span className="font-bold text-slate-900">{sysValue}</span>
+                            ) : (
+                              <span className="text-slate-300 select-none">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+
+                    {/* CH lv chính (Đưa về SAU Đánh giá chung toàn chuỗi - mỗi dòng là một cơ sở) */}
                     <td className="p-2 text-center align-middle border-r border-slate-400 font-extrabold text-slate-900 bg-slate-50/60">
                       <span className="text-[12px]">{store.code}</span>
                     </td>
 
-                    {/* All Field Columns */}
-                    {REPORT_GROUPS.map((group) => {
+                    {/* 25 Cột Nghiệp Vụ Từng Cơ Sở (Phục vụ, Nhân sự, Bia, Món ăn, Sửa chữa, Đào tạo, Đối ngoại) */}
+                    {STORE_REPORT_GROUPS.map((group) => {
                       return group.columns.map((col) => {
                         const cellValue = storeVals[col.id] || '';
                         return (
                           <td
                             key={col.id}
-                            className="p-2 align-top border-r border-slate-400 text-slate-800 text-[11px] leading-relaxed break-words min-w-[110px] max-w-[160px] whitespace-pre-wrap"
+                            className="p-2 align-top border-r border-slate-400 text-slate-800 text-[11px] leading-relaxed break-words whitespace-pre-wrap min-w-[110px] max-w-[160px]"
                           >
                             {cellValue ? (
                               <span>{cellValue}</span>

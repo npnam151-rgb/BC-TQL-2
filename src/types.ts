@@ -24,7 +24,63 @@ export interface ReportGroupDef {
   columns: ReportColumnDef[];
 }
 
-export const REPORT_GROUPS: ReportGroupDef[] = [
+export const SYSTEM_REPORT_GROUP: ReportGroupDef = {
+  key: 'danh_gia_chung',
+  title: 'ĐÁNH GIÁ CHUNG TOÀN CHUỖI',
+  columns: [
+    {
+      id: 'dt_toan_he_thong',
+      header: 'DT toàn hệ thống:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'Doanh thu toàn chuỗi...',
+      example: '158.5 tr',
+    },
+    {
+      id: 'muc_tieu_ngay',
+      header: 'Mục tiêu ngày:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'Mục tiêu DT toàn chuỗi...',
+      example: '160.0 tr',
+    },
+    {
+      id: 'tang_giam_hom_truoc',
+      header: 'Tăng/giảm so với hôm trc:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'Tăng/giảm tiền hoặc %...',
+      example: '+12.8 tr (+8.8%)',
+    },
+    {
+      id: 'tong_luot_khach',
+      header: 'Tổng lượt khách:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'Tổng lượt khách toàn chuỗi...',
+      example: '1,080 khách',
+    },
+    {
+      id: 'so_ban_phuc_vu',
+      header: 'Số bàn phục vụ:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'Tổng số bàn toàn chuỗi...',
+      example: '275 bàn',
+    },
+    {
+      id: 'dt_tb_khach',
+      header: 'DT TB/khách:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'DT bình quân/khách toàn chuỗi...',
+      example: '147k/khách',
+    },
+    {
+      id: 'xep_hang_dt',
+      header: 'Xếp hạng DT:',
+      groupKey: 'danh_gia_chung',
+      placeholder: 'Thứ tự DT các quán...',
+      example: '12 ĐT > 01 DD > 94 LĐ',
+    },
+  ],
+};
+
+export const STORE_REPORT_GROUPS: ReportGroupDef[] = [
   {
     key: 'phuc_vu',
     title: 'PHỤC VỤ',
@@ -69,14 +125,14 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Vđ phát sinh:',
         groupKey: 'phuc_vu',
         placeholder: 'Các vấn đề hoặc phàn nàn phát sinh trong ca...',
-        example: 'Bàn số 8 phản ánh món cá nướng hơi mặn',
+        example: 'Không có phát sinh',
       },
       {
         id: 'cach_giai_quyet_pv',
         header: 'Cách giải quyết ps:',
         groupKey: 'phuc_vu',
         placeholder: 'Cách thức và kết quả giải quyết phát sinh...',
-        example: 'Đã xin lỗi khách, đổi món mới và tặng tráng miệng',
+        example: 'Vận hành ổn định',
       },
     ],
   },
@@ -97,7 +153,7 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'NS nghỉ đột xuất:',
         groupKey: 'nhan_su',
         placeholder: 'Nhân sự nghỉ không báo trước hoặc đột xuất...',
-        example: '1 bạn (bị sốt)',
+        example: 'Không có',
         type: 'text',
       },
       {
@@ -113,7 +169,7 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'NS mới:',
         groupKey: 'nhan_su',
         placeholder: 'Nhân sự mới thử việc, học việc...',
-        example: '1 bạn mới (Mai - ca tối)',
+        example: 'Không có',
         type: 'text',
       },
       {
@@ -121,7 +177,7 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'NS hỗ trợ:',
         groupKey: 'nhan_su',
         placeholder: 'Nhân sự tăng cường từ cơ sở khác...',
-        example: '1 bạn hỗ trợ từ 94 LĐ',
+        example: 'Không có',
         type: 'text',
       },
     ],
@@ -149,14 +205,14 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Cách giải quyết ps:',
         groupKey: 'bia',
         placeholder: 'Phương án xử lý phát sinh về bia...',
-        example: 'Đã xả van kiểm tra và vận hành ổn định',
+        example: 'Duy trì ổn định bồn ủ lạnh',
       },
       {
         id: 'xuat_ban_tiec',
         header: 'Xuất bán tiệc:',
         groupKey: 'bia',
         placeholder: 'Bia xuất tiệc, số lượng bom, khuyến mãi nếu có...',
-        example: 'Tiệc công ty 25 người: dùng 4 bom bia',
+        example: '1 tiệc sinh nhật: xuất 4 bom',
       },
     ],
   },
@@ -169,7 +225,7 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Món đẩy:',
         groupKey: 'mon_an',
         placeholder: 'Món trọng tâm cần đẩy bán...',
-        example: 'Dê xào lăn, Chim câu quay lá móc mật',
+        example: 'Dê xào lăn, Chim câu quay',
       },
       {
         id: 'mon_ban_chay',
@@ -190,14 +246,14 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Vđ phát sinh:',
         groupKey: 'mon_an',
         placeholder: 'Món thiếu nguyên liệu, món ra chậm, khách đổi trả...',
-        example: 'Hết rau muống xào tỏi lúc 21h15',
+        example: 'Không có',
       },
       {
         id: 'cach_giai_quyet_mon',
         header: 'Cách giải quyết ps:',
         groupKey: 'mon_an',
         placeholder: 'Cách xử lý của TQL và bếp...',
-        example: 'Bếp đã bổ sung cải ngọt thay thế kịp thời',
+        example: 'Bếp ra đồ đều',
       },
     ],
   },
@@ -210,14 +266,14 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Hỏng hóc cần sửa:',
         groupKey: 'sua_chua',
         placeholder: 'Thiết bị điện, nước, âm thanh, điều hòa cần bảo trì...',
-        example: 'Đèn hắt khu sân vườn bị chập chờn',
+        example: 'Không có',
       },
       {
         id: 'hang_muc_sua_trong_ngay',
         header: 'Hạng mục sửa trong ngày:',
         groupKey: 'sua_chua',
         placeholder: 'Các thiết bị đã sửa chữa xong trong ngày...',
-        example: 'Đã thay bóng đèn và siết lại vòi bồn rửa tay',
+        example: 'Bảo dưỡng định kỳ',
       },
     ],
   },
@@ -230,7 +286,7 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Đào tạo:',
         groupKey: 'dao_tao',
         placeholder: 'Nội dung đào tạo nội bộ, hướng dẫn quy trình mới...',
-        example: 'Hướng dẫn nhân viên mới quy trình rót bia và chào khách chuẩn',
+        example: 'Đào tạo kỹ năng rót bia chuẩn 2 ngón bọt cho nhân viên mới',
       },
     ],
   },
@@ -243,14 +299,30 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
         header: 'Đối ngoại:',
         groupKey: 'doi_ngoai',
         placeholder: 'Tình hình tiếp đoàn kiểm tra, cư dân, trật tự đô thị...',
-        example: 'Tổ dân phố nhắc nhở xếp xe gọn gàng, đã xử lý ngay',
+        example: 'Khu vực để xe gọn gàng, an ninh trật tự đảm bảo',
       },
     ],
   },
 ];
 
-// Flat list of all 25 field columns
-export const ALL_COLUMNS: ReportColumnDef[] = REPORT_GROUPS.flatMap(g => g.columns);
+// All report groups: Whole system group first, then 7 store inspection groups
+export const REPORT_GROUPS: ReportGroupDef[] = [
+  SYSTEM_REPORT_GROUP,
+  ...STORE_REPORT_GROUPS,
+];
+
+// Flat list of 8 system evaluation columns
+export const SYSTEM_COLUMNS: ReportColumnDef[] = SYSTEM_REPORT_GROUP.columns;
+
+// Flat list of 25 store inspection columns
+export const STORE_COLUMNS: ReportColumnDef[] = STORE_REPORT_GROUPS.flatMap(g => g.columns);
+
+// Flat list of all 33 inspection field columns
+export const ALL_COLUMNS: ReportColumnDef[] = [...SYSTEM_COLUMNS, ...STORE_COLUMNS];
+
+export interface SystemEvaluationValues {
+  [columnId: string]: string;
+}
 
 export interface StoreReportValues {
   [columnId: string]: string;
@@ -264,16 +336,24 @@ export const getSystemTime = (): string => {
 };
 
 export interface TQLReportData {
-  sendTime: string; // Tự động lấy giờ hệ thống lúc tạo/xuất
-  date: string;     // e.g. "2026-09-21"
-  reporter: string; // e.g. "Nguyễn Văn Nam"
-  // Map of data per store for all 6 stores (01 DD, 03 NVH, 12 ĐT, 94 LĐ, 96 HT, 98 VTP)
+  sendTime: string;
+  date: string;
+  reporter: string;
+  systemEvaluation: SystemEvaluationValues;
   stores: Record<StoreCode, StoreReportValues>;
 }
 
+export const createEmptySystemEvaluation = (): SystemEvaluationValues => {
+  const values: SystemEvaluationValues = {};
+  SYSTEM_COLUMNS.forEach(col => {
+    values[col.id] = '';
+  });
+  return values;
+};
+
 export const createEmptyStoreValues = (): StoreReportValues => {
   const values: StoreReportValues = {};
-  ALL_COLUMNS.forEach(col => {
+  STORE_COLUMNS.forEach(col => {
     values[col.id] = '';
   });
   return values;
@@ -296,163 +376,312 @@ export const createInitialReportData = (): TQLReportData => {
     sendTime: getSystemTime(),
     date: dateStr,
     reporter: '',
+    systemEvaluation: createEmptySystemEvaluation(),
     stores: initialStores,
   };
 };
 
-export const getSampleReportData = (): TQLReportData => {
+// --- DATA POOLS FOR RANDOM SAMPLE GENERATION ---
+const randomPick = <T>(arr: T[]): T => arr[Math.floor(Math.random() * arr.length)];
+const randomInt = (min: number, max: number): number => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const POOLS = {
+  reporters: [
+    'Nguyễn Văn Nam',
+    'Trần Tuấn Anh',
+    'Hoàng Minh Đức',
+    'Phạm Quốc Huy',
+    'Đỗ Quang Hưng',
+  ],
+  xepBan: [
+    'Đón tiếp niềm nở, xếp khách vào tầng 1 & sân vườn, không để khách chờ',
+    'Khách đông từ 19h30, điều phối bàn nhanh, hướng dẫn xe chu đáo',
+    'Xếp khách hợp lý, ưu tiên đoàn 20 khách đặt trước phòng VIP',
+    'Đón tiếp chu đáo, mở cửa chào khách to rõ, tạo thiện cảm tốt',
+    'Khách vào rải rác đều, phân bổ các khu vực tầng 1 và tầng 2 thoáng đãng',
+    'Nhân viên chủ động ghép bàn cho đoàn 15 người nhanh chóng',
+  ],
+  orderTuVan: [
+    'Tư vấn tốt combo nướng và bia tươi Trúc Bạch mới khui',
+    'Order nhanh qua tablet, gợi ý các món đặc sản bán chạy đạt hiệu quả',
+    'Tư vấn nhiệt tình các món nhắm khai vị và đồ uống phù hợp',
+    'Nắm chắc menu, giải thích rõ định lượng từng món cho khách',
+    'Gợi ý đổi món hết nhanh gọn, khách vui vẻ đồng ý',
+    'Order chính xác, không nhầm bàn, ghi chú rõ món ít cay cho khách',
+  ],
+  chamSocUpsell: [
+    'Rót bia kịp thời, bàn luôn đầy đủ đá lạnh và ly sạch',
+    'Chăm sóc bàn chu đáo, upsell thêm 4 tháp bia và 2 đĩa nướng',
+    'Lấy thêm đĩa sạch liên tục, upsell thành công 3 set lẩu riêu cua',
+    'Quan sát khách tốt, châm đá và bia ngay khi cạn ly',
+    'Khách khen nhân viên ngoan, upsell thêm 2 món chiên khai vị',
+    'Phục vụ nhiệt tình, gợi ý tráng miệng hoa quả tươi thành công',
+  ],
+  tocDoRaDo: [
+    'Bia ra ngay sau 1-2 phút, đồ nướng 6-8 phút đúng chuẩn',
+    'Đồ uống ra tức thì, đồ ăn trung bình 5-7 phút nóng hổi',
+    'Tốc độ ra đồ nhanh, không bị dồn đơn bếp lúc cao điểm',
+    'Đạt chuẩn: 3 phút món khai vị, 8 phút món chính',
+    'Kiểm soát bill tốt, ra đồ theo đúng thứ tự bàn gọi',
+    'Bếp và bar phối hợp nhịp nhàng, ra đồ đồng bộ chuẩn ca',
+  ],
+  veSinh: [
+    'Sạch sẽ, dọn bàn nhanh, khu WC kiểm tra 30p/lần khô ráo thơm tho',
+    'Sàn nhà khô ráo, bàn ghế lau cồn sạch sẽ bóng loáng',
+    'Khu vực quầy bar và WC thơm mùi tinh dầu sả, sạch nước',
+    'Dọn đĩa trống liên tục, mặt bàn luôn thoáng đãng',
+    'Bát đũa bóng loáng, thùng rác không bị đầy ứ',
+    'Kiểm tra định kỳ khu vực bồn rửa và thảm lau chân sạch sẽ',
+  ],
+  vdPhatSinhPV: [
+    'Không có phát sinh',
+    'Bàn số 8 đề nghị giảm bớt điều hòa vì có trẻ nhỏ',
+    'Khách xin đổi vị trí bàn ra gần quạt mát',
+    'Bàn 12 gọi thêm 2 ghế phụ lúc quán đang đông',
+    'Khách thanh toán chuyển khoản bị chậm mạng 1 phút',
+    'Không có sự cố',
+  ],
+  cachGiaiQuyetPV: [
+    'Vận hành ổn định',
+    'Đã tăng nhiệt độ lên 26 độ và chuyển hướng gió',
+    'Đã hỗ trợ chuyển bàn sang góc thoáng theo ý khách',
+    'Đã lấy ghế phụ dự phòng bổ sung ngay cho khách',
+    'Đã hướng dẫn khách quét mã QR mạng phụ thành công',
+    'Ca làm việc trôi chảy',
+  ],
+  nsNghiDotXuat: [
+    'Không có',
+    'Không có',
+    '1 bạn (bị cảm sốt ca tối)',
+    'Không có',
+    '1 bạn (việc gia đình đột xuất)',
+    'Không có',
+  ],
+  nsNghiHan: ['Không có', 'Không có', 'Không có', '1 bạn (chuyển chỗ ở)', 'Không có'],
+  nsMoi: [
+    'Không có',
+    '1 bạn mới (Mai - ca tối)',
+    'Không có',
+    '1 bạn học việc (Tuấn - bàn)',
+    'Không có',
+    '1 bạn thử việc (Hương)',
+  ],
+  nsHoTro: [
+    'Không có',
+    'Không có',
+    '1 bạn tăng cường từ 94 LĐ',
+    'Đã điều 1 bạn sang 01 DD hỗ trợ',
+    'Không có',
+  ],
+  phanHoiBia: [
+    'Khách khen bia lạnh sâu, bọt mịn thơm mát',
+    'Bia đạt chuẩn, nhiệt độ ủ lạnh hoàn hảo',
+    'Khách uống khen bia Trúc Bạch đậm đà, chuẩn vị',
+    'Bọt rót chuẩn 2 ngón tay, giữ nhiệt tốt',
+    'Bia ngon, cốc ướp lạnh sẵn đạt chuẩn hệ thống',
+    'Khách quen khen chất lượng bia ổn định',
+  ],
+  vdPhatSinhBia: [
+    'Không có sự cố',
+    'Không có',
+    'Áp suất vòi số 2 hơi yếu đầu ca',
+    'Không có',
+    'Không có',
+  ],
+  cachGiaiQuyetBia: [
+    'Duy trì ổn định nhiệt độ bồn ủ lạnh',
+    'Vận hành tốt',
+    'Đã xả van kiểm tra và chỉnh lại van CO2 đạt chuẩn',
+    'Bảo dưỡng hệ thống định kỳ',
+    'Vận hành trơn tru',
+  ],
+  xuatBanTiec: [
+    'Không có tiệc lớn',
+    '1 tiệc sinh nhật 16 người: xuất bán 5 bom',
+    '2 tiệc liên hoan công ty: xuất 9 bom bia',
+    '1 tiệc họp lớp 22 khách (6 bom)',
+    'Khách lẻ tiêu thụ 4 bom bia tươi',
+    'Không có tiệc',
+  ],
+  monDay: [
+    'Bò tơ nướng tảng, Lẩu gà lá é',
+    'Dê xào lăn, Chim câu quay lá móc mật',
+    'Chân giò chiên giòn, Cá chép om dưa',
+    'Gà nướng lu than hoa, Lẩu ếch măng cay',
+    'Bò nhúng dấm, Mực một nắng nướng sa tế',
+    'Lẩu riêu cua bắp bò sườn sụn, Dê nướng tảng',
+  ],
+  monBanChay: [
+    'Dồi sụn nướng, Chả ốc, Đậu lướt ván',
+    'Nem chua rán, Lạc luộc, Mực chiên bơ',
+    'Khoai tây chiên, Ngô chiên, Dê nướng tảng',
+    'Dồi sụn, Lẩu riêu cua, Nộm tai heo',
+    'Chả ốc nướng giấy bạc, Đậu tẩm hành',
+    'Thịt dải nướng, Khoai lang kén, Rau luộc kho quẹt',
+  ],
+  phanHoiMon: [
+    'Món ăn vừa miệng, nóng hổi, trình bày sạch đẹp',
+    'Khách khen món nướng ướp đậm đà, lẩu ngọt nước',
+    'Đồ nhắm phong phú, định lượng đầy đặn',
+    'Khách khen cá tươi ngon, gia vị chuẩn vị',
+    'Món ăn hợp khẩu vị số đông khách',
+    'Bếp giữ chất lượng món ổn định',
+  ],
+  vdPhatSinhMon: [
+    'Không có',
+    'Hết rau muống xào tỏi lúc 21h10',
+    'Khách giục món nướng lúc 20h do đông',
+    'Không có',
+    'Khách xin thêm sốt chấm thịt nướng',
+    'Không có',
+  ],
+  cachGiaiQuyetMon: [
+    'Bếp ra đồ đều đặn',
+    'Đã tư vấn đổi sang rau cải ngọt xào tỏi khách ưng ý',
+    'Bếp ưu tiên nướng trước và tặng tráng miệng',
+    'Đã tiếp thêm nước sốt đặc biệt ngay cho khách',
+    'Phối hợp bếp trôi chảy',
+    'Ca ổn định',
+  ],
+  hongHoc: [
+    'Không có',
+    'Đèn trang trí sân vườn bị chập chờn 1 bóng',
+    'Vòi bồn rửa tay WC tầng 1 bị lỏng ren',
+    'Quạt treo tường số 2 phát tiếng kêu nhẹ',
+    'Không có',
+    'Không có',
+  ],
+  suaChua: [
+    'Bảo dưỡng định kỳ các thiết bị',
+    'Đã thay bóng LED mới, sáng rõ',
+    'Đã siết lại ren và thay gioăng cao su',
+    'Đã tra dầu bảo dưỡng quạt chạy êm',
+    'Đã vệ sinh lưới lọc điều hòa phòng lớn',
+    'Đã kiểm tra định kỳ hệ thống điện và bình PCCC',
+  ],
+  daoTao: [
+    'Đào tạo kỹ năng chào bàn chuẩn và kỹ thuật upsell tháp bia',
+    'Nhắc nhở kiểm tra tem date thực phẩm và nguyên tắc FIFO trong kho lạnh',
+    'Hướng dẫn kỹ thuật rót bia bọt chuẩn 2 ngón tay và cách bưng khay an toàn',
+    'Đào tạo kỹ năng xử lý phàn nàn và xin lỗi khách hàng chuyên nghiệp',
+    'Họp đầu ca chốt mục tiêu doanh thu và nhắc nhở tác phong đồng phục',
+    'Hướng dẫn quy trình dọn bàn 3 phút và setup bàn tiệc mới',
+  ],
+  doiNgoai: [
+    'Khu vực để xe thông thoáng, bảo vệ dắt xe chu đáo, an ninh trật tự tốt',
+    'Tổ dân phố đi tuần lúc 20h, nhắc nhở giữ trật tự chung, cửa hàng chấp hành nghiêm',
+    'Cư dân xung quanh hài hòa, không có phản ánh về tiếng ồn',
+    'Phối hợp tốt với công an phường đảm bảo an ninh trật tự hè phố',
+    'Xe của khách được xếp ngay ngắn trong vạch quy định, giao thông thông suốt',
+    'Mọi việc đối ngoại trong ngày diễn ra êm đẹp, không phát sinh vấn đề',
+  ],
+};
+
+/**
+ * Generates truly randomized, realistic data for all 6 stores.
+ * Numbers and evaluation texts are uniquely computed every time.
+ */
+export const getRandomReportData = (): TQLReportData => {
   const base = createInitialReportData();
-  base.reporter = 'Nguyễn Văn Nam';
+  base.reporter = randomPick(POOLS.reporters);
   base.sendTime = getSystemTime();
-  base.stores['01 DD'] = {
-    xep_ban: 'Đón tiếp niềm nở, xếp khách vào tầng 1 & sân vườn, không để khách chờ',
-    order_tu_van: 'Tư vấn tốt combo tiệc, gợi ý món nướng và bia tươi mới khui',
-    cham_soc_upsell: 'Chăm sóc chu đáo, rót bia liên tục, upsell thêm 6 tháp bia',
-    toc_do_ra_do: 'Bia ra ngay sau 1-2 phút, đồ ăn 5-8 phút đúng chuẩn',
-    ve_sinh: 'Sạch sẽ, dọn bàn nhanh, khu WC kiểm tra 30p/lần khô ráo',
-    vd_phat_sinh_pv: 'Bàn 12 đề nghị giảm bớt điều hòa vì có trẻ em',
-    cach_giai_quyet_pv: 'Đã chỉnh nhiệt độ lên 26 độ và chuyển góc ấm hơn',
-    tong_ns_di_lam: '9 bạn',
-    ns_nghi_dot_xuat: '1 bạn (bị cảm sốt ca tối)',
-    ns_nghi_han: 'Không có',
-    ns_moi: '1 bạn mới (Hương - bàn)',
-    ns_ho_tro: '1 bạn hỗ trợ từ 94 LĐ',
-    phan_hoi_khach_bia: 'Khách khen bia lạnh sâu, bọt mịn thơm',
-    vd_phat_sinh_bia: 'Không có sự cố',
-    cach_giai_quyet_bia: 'Duy trì ổn định nhiệt độ bồn ủ lạnh',
-    xuat_ban_tiec: '2 tiệc liên hoan: xuất bán 8 bom bia',
-    mon_day: 'Bò tơ nướng tảng, Lẩu gà lá é',
-    mon_ban_chay: 'Dồi sụn nướng, Chả ốc, Đậu lướt ván',
-    phan_hoi_khach_mon: 'Khách đánh giá món ăn vừa miệng, nóng hổi',
-    vd_phat_sinh_mon: 'Bàn 6 giục món nướng lúc 20h10 do đông khách',
-    cach_giai_quyet_mon: 'Bếp đã ưu tiên lên trước, tặng đĩa đậu phộng tráng miệng',
-    hong_hoc_can_sua: 'Đèn trang trí sân vườn bị nhấp nháy 1 bóng',
-    hang_muc_sua_trong_ngay: 'Đã thay bóng đèn mới, siết lại vòi nước bồn rửa ly',
-    dao_tao: 'Đào tạo kỹ năng xử lý tình huống phàn nàn và cách chào bàn chuẩn cho 3 bạn mới',
-    doi_ngoai: 'Tổ dân phố đi tuần lúc 20h, nhắc nhở xếp xe gọn gàng, cửa hàng chấp hành tốt',
+
+  // Generate randomized revenues for each store and sort for ranking
+  const storeRevenues = STORES.map((s) => {
+    const rev = randomInt(160, 360) / 10; // 16.0 to 36.0 tr
+    const target = (Math.round(rev / 5) * 5) + randomPick([-2, 0, 2, 3]);
+    const diff = +(rev - target).toFixed(1);
+    const diffPct = +((diff / target) * 100).toFixed(1);
+    const guests = Math.round((rev * 1000) / randomInt(135, 160));
+    const tables = Math.round(guests / randomInt(3, 5));
+    const avgPerGuest = Math.round((rev * 1000) / Math.max(1, guests));
+
+    return {
+      code: s.code,
+      rev,
+      target,
+      diff,
+      diffPct,
+      guests,
+      tables,
+      avgPerGuest,
+    };
+  });
+
+  // Sort by revenue descending to determine rank
+  const sorted = [...storeRevenues].sort((a, b) => b.rev - a.rev);
+  const rankingSummary = sorted.map((item) => item.code).join(' > ');
+
+  // Calculate aggregated metrics for the whole system
+  const totalRev = +(storeRevenues.reduce((acc, cur) => acc + cur.rev, 0)).toFixed(1);
+  const totalTarget = +(storeRevenues.reduce((acc, cur) => acc + cur.target, 0)).toFixed(1);
+  const totalDiff = +(totalRev - totalTarget).toFixed(1);
+  const totalDiffPct = +((totalDiff / totalTarget) * 100).toFixed(1);
+  const totalGuests = storeRevenues.reduce((acc, cur) => acc + cur.guests, 0);
+  const totalTables = storeRevenues.reduce((acc, cur) => acc + cur.tables, 0);
+  const avgPerGuestSystem = Math.round((totalRev * 1000) / Math.max(1, totalGuests));
+
+  // 1. ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 chỉ số cấp hệ thống)
+  base.systemEvaluation = {
+    dt_toan_he_thong: `${totalRev.toFixed(1)} tr`,
+    muc_tieu_ngay: `${totalTarget.toFixed(1)} tr`,
+    tang_giam_hom_truoc: `${totalDiff >= 0 ? '+' : ''}${totalDiff.toFixed(1)} tr (${totalDiffPct >= 0 ? '+' : ''}${totalDiffPct}%)`,
+    tong_luot_khach: `${totalGuests.toLocaleString('vi-VN')} khách`,
+    so_ban_phuc_vu: `${totalTables} bàn`,
+    dt_tb_khach: `${avgPerGuestSystem}k/khách`,
+    xep_hang_dt: rankingSummary,
   };
 
-  base.stores['03 NVH'] = {
-    ...createEmptyStoreValues(),
-    xep_ban: 'Khách kín tầng 1, xếp bàn hợp lý, điều phối xe tốt',
-    order_tu_van: 'Order nhanh, tư vấn thêm bia Trúc Bạch và đồ nguội',
-    cham_soc_upsell: 'Rót bia kịp thời, bàn luôn có đá lạnh',
-    toc_do_ra_do: 'Đồ uống 2p, đồ ăn 7-10p',
-    ve_sinh: 'Sàn nhà sạch, bàn ăn dọn ngay khi khách đứng dậy',
-    vd_phat_sinh_pv: 'Không có',
-    cach_giai_quyet_pv: 'Ổn định',
-    tong_ns_di_lam: '8 bạn',
-    ns_nghi_dot_xuat: 'Không có',
-    ns_nghi_han: 'Không có',
-    ns_moi: 'Không có',
-    ns_ho_tro: 'Không có',
-    phan_hoi_khach_bia: 'Bia đạt chuẩn, nhiệt độ lạnh tốt',
-    vd_phat_sinh_bia: 'Không có',
-    cach_giai_quyet_bia: 'Vận hành tốt',
-    xuat_ban_tiec: '1 tiệc sinh nhật 15 người',
-    mon_day: 'Chân giò chiên giòn, Cá chép om dưa',
-    mon_ban_chay: 'Nem chua rán, Lẩu riêu cua',
-    phan_hoi_khach_mon: 'Khách khen cá tươi ngon',
-    vd_phat_sinh_mon: 'Không có',
-    cach_giai_quyet_mon: 'Bếp ra đồ đều',
-    hong_hoc_can_sua: 'Máy làm đá bị đóng tuyết nhẹ',
-    hang_muc_sua_trong_ngay: 'Đã xả tuyết và bảo dưỡng máy đá',
-    dao_tao: 'Nhắc nhở kiểm tra tem date thực phẩm trong tủ bảo quản',
-    doi_ngoai: 'Không có vấn đề phát sinh',
-  };
+  // 2. Điền 25 hạng mục nghiệp vụ cho từng cơ sở (không lặp lại 8 cột toàn chuỗi)
+  storeRevenues.forEach((item) => {
+    const code = item.code;
 
-  base.stores['12 ĐT'] = {
-    ...createEmptyStoreValues(),
-    xep_ban: 'Đón tiếp chu đáo, khách vào đông từ 19h30',
-    order_tu_van: 'Tư vấn nhiệt tình các món nướng than hoa',
-    cham_soc_upsell: 'Upsell tốt 4 combo khai vị',
-    toc_do_ra_do: 'Đạt chuẩn 5-7 phút',
-    ve_sinh: 'Khu vực quầy bar và WC sạch sẽ, khô ráo',
-    tong_ns_di_lam: '7 bạn',
-    ns_nghi_dot_xuat: 'Không có',
-    ns_nghi_han: 'Không có',
-    ns_moi: '1 bạn học việc (Tuấn)',
-    ns_ho_tro: 'Không có',
-    phan_hoi_khach_bia: 'Bia rót chuẩn bọt 2 ngón tay, khách hài lòng',
-    xuat_ban_tiec: 'Không có',
-    mon_day: 'Dê tái chanh, Ba chỉ nướng riềng mẻ',
-    mon_ban_chay: 'Chả ốc, Dồi sụn, Lạc luộc',
-    phan_hoi_khach_mon: 'Món ăn đậm đà, nóng sốt',
-    hong_hoc_can_sua: 'Không có',
-    hang_muc_sua_trong_ngay: 'Đã thay pin mic loa kéo',
-    dao_tao: 'Hướng dẫn bạn Tuấn cách bưng bê khay an toàn',
-    doi_ngoai: 'Khách gửi xe trật tự, bảo vệ hỗ trợ tốt',
-  };
+    base.stores[code] = {
+      // PHỤC VỤ (7 cột)
+      xep_ban: randomPick(POOLS.xepBan),
+      order_tu_van: randomPick(POOLS.orderTuVan),
+      cham_soc_upsell: randomPick(POOLS.chamSocUpsell),
+      toc_do_ra_do: randomPick(POOLS.tocDoRaDo),
+      ve_sinh: randomPick(POOLS.veSinh),
+      vd_phat_sinh_pv: randomPick(POOLS.vdPhatSinhPV),
+      cach_giai_quyet_pv: randomPick(POOLS.cachGiaiQuyetPV),
 
-  base.stores['94 LĐ'] = {
-    ...createEmptyStoreValues(),
-    xep_ban: 'Đón tiếp tốt, khách đoàn 30 khách xếp phòng riêng tầng 2',
-    order_tu_van: 'Nhân viên nắm rõ thực đơn, tư vấn món chính chuẩn',
-    cham_soc_upsell: 'Bàn tiệc được phục vụ chu đáo, rót bia liên tục',
-    toc_do_ra_do: 'Đồ tiệc lên đúng tiến độ đã đặt trước',
-    ve_sinh: 'Vệ sinh phòng tiệc sạch trước và sau khi khách dùng',
-    tong_ns_di_lam: '11 bạn',
-    ns_nghi_dot_xuat: 'Không có',
-    ns_nghi_han: 'Không có',
-    ns_moi: 'Không có',
-    ns_ho_tro: 'Đã điều 1 bạn sang 01 DD hỗ trợ ca tối',
-    phan_hoi_khach_bia: 'Bia xuất đều, nhiệt độ ủ lạnh sâu',
-    vd_phat_sinh_bia: 'Không có',
-    xuat_ban_tiec: '1 tiệc công ty 30 người (10 bom)',
-    mon_day: 'Gà nướng lu, Lẩu ếch măng cay',
-    mon_ban_chay: 'Chả ốc, Dê nướng bản gang',
-    phan_hoi_khach_mon: 'Khách đánh giá đồ ăn ngon, số lượng đầy đặn',
-    hong_hoc_can_sua: 'Quạt treo tường phòng 201 phát tiếng kêu',
-    hang_muc_sua_trong_ngay: 'Đã tra dầu và siết lại ốc quạt',
-    dao_tao: 'Đào tạo kỹ năng phục vụ phòng VIP cho nhân viên bàn',
-    doi_ngoai: 'An ninh trật tự tốt, xe cộ gọn gàng',
-  };
+      // NHÂN SỰ (5 cột)
+      tong_ns_di_lam: `${randomInt(7, 11)} bạn`,
+      ns_nghi_dot_xuat: randomPick(POOLS.nsNghiDotXuat),
+      ns_nghi_han: randomPick(POOLS.nsNghiHan),
+      ns_moi: randomPick(POOLS.nsMoi),
+      ns_ho_tro: randomPick(POOLS.nsHoTro),
 
-  base.stores['96 HT'] = {
-    ...createEmptyStoreValues(),
-    xep_ban: 'Khách lẻ vào rải rác, xếp bàn thoáng mát tầng 1',
-    order_tu_van: 'Tư vấn món nhanh, giới thiệu bia mùa mới',
-    cham_soc_upsell: 'Chăm sóc bàn tốt, dọn đĩa trống kịp thời',
-    toc_do_ra_do: 'Đồ uống ra ngay, đồ ăn trung bình 6 phút',
-    ve_sinh: 'Sạch sẽ, thông thoáng',
-    tong_ns_di_lam: '7 bạn',
-    ns_nghi_dot_xuat: 'Không có',
-    ns_nghi_han: 'Không có',
-    ns_moi: 'Không có',
-    ns_ho_tro: 'Không có',
-    phan_hoi_khach_bia: 'Khách khen bia thơm mát, tươi ngon',
-    xuat_ban_tiec: 'Không có tiệc lớn',
-    mon_day: 'Bò nhúng dấm, Mực một nắng nướng',
-    mon_ban_chay: 'Ngô chiên, Đậu phụ chiên giòn, Khoai lang kén',
-    phan_hoi_khach_mon: 'Đồ nhắm vừa vặn với bia',
-    hong_hoc_can_sua: 'Không có',
-    hang_muc_sua_trong_ngay: 'Đã kiểm tra định kỳ bình PCCC',
-    dao_tao: 'Nhắc nhở tác phong đồng phục và vệ sinh cá nhân',
-    doi_ngoai: 'Khu vực để xe thông thoáng',
-  };
+      // BIA (4 cột)
+      phan_hoi_khach_bia: randomPick(POOLS.phanHoiBia),
+      vd_phat_sinh_bia: randomPick(POOLS.vdPhatSinhBia),
+      cach_giai_quyet_bia: randomPick(POOLS.cachGiaiQuyetBia),
+      xuat_ban_tiec: randomPick(POOLS.xuatBanTiec),
 
-  base.stores['98 VTP'] = {
-    ...createEmptyStoreValues(),
-    xep_ban: 'Đón tiếp tốt, hướng dẫn khách lên tầng 2 có điều hòa',
-    order_tu_van: 'Gợi ý món lẩu riêu cua bắp bò',
-    cham_soc_upsell: 'Upsell thêm đồ nhúng lẩu và bia',
-    toc_do_ra_do: 'Nồi lẩu lên sau 5 phút, đồ ăn kèm đầy đủ',
-    ve_sinh: 'Bàn ghế lau khô ráo, khu vực bếp sạch sẽ',
-    tong_ns_di_lam: '8 bạn',
-    ns_nghi_dot_xuat: 'Không có',
-    ns_nghi_han: 'Không có',
-    ns_moi: 'Không có',
-    ns_ho_tro: 'Không có',
-    phan_hoi_khach_bia: 'Bia giữ lạnh tốt',
-    xuat_ban_tiec: 'Không có',
-    mon_day: 'Lẩu riêu cua bắp bò sườn sụn',
-    mon_ban_chay: 'Dồi sụn, Khoai tây chiên, Mực nướng',
-    phan_hoi_khach_mon: 'Khách hài lòng',
-    hong_hoc_can_sua: 'Không có',
-    hang_muc_sua_trong_ngay: 'Vệ sinh lưới lọc điều hòa phòng lớn',
-    dao_tao: 'Hướng dẫn quy trình bật tắt điện tiết kiệm cuối ca',
-    doi_ngoai: 'Tổ dân phố không có phản ánh',
-  };
+      // MÓN ĂN (5 cột)
+      mon_day: randomPick(POOLS.monDay),
+      mon_ban_chay: randomPick(POOLS.monBanChay),
+      phan_hoi_khach_mon: randomPick(POOLS.phanHoiMon),
+      vd_phat_sinh_mon: randomPick(POOLS.vdPhatSinhMon),
+      cach_giai_quyet_mon: randomPick(POOLS.cachGiaiQuyetMon),
+
+      // SỬA CHỮA (2 cột)
+      hong_hoc_can_sua: randomPick(POOLS.hongHoc),
+      hang_muc_sua_trong_ngay: randomPick(POOLS.suaChua),
+
+      // ĐÀO TẠO (1 cột)
+      dao_tao: randomPick(POOLS.daoTao),
+
+      // ĐỐI NGOẠI (1 cột)
+      doi_ngoai: randomPick(POOLS.doiNgoai),
+    };
+  });
 
   return base;
+};
+
+// getSampleReportData points to getRandomReportData for continuous fresh variations
+export const getSampleReportData = (): TQLReportData => {
+  return getRandomReportData();
 };

@@ -21,6 +21,8 @@ import {
   TQLReportData,
   createInitialReportData,
   STORES,
+  SYSTEM_COLUMNS,
+  STORE_COLUMNS,
   ALL_COLUMNS,
   getSystemTime,
 } from './types';
@@ -60,14 +62,32 @@ export default function App() {
       return false;
     }
 
-    // Build storesList for 6 stores with all 25 field values
-    const storesList = STORES.map((s) => {
+    // Build storesList for 6 stores with values in the exact format:
+    // 7 Cột Đánh giá chung toàn chuỗi (chỉ hàng 01 DD có giá trị, các hàng sau để "")
+    // CH lv chính (từng cơ sở: 01 DD, 03 NVH, ...)
+    // 25 Cột kiểm tra nghiệp vụ cơ sở
+    const storesList = STORES.map((s, idx) => {
       const storeVals = data.stores[s.code] || {};
-      const values = ALL_COLUMNS.map((col) => String(storeVals[col.id] || ''));
+      const sysVals = data.systemEvaluation || {};
+
+      const systemValues = SYSTEM_COLUMNS.map((col) => {
+        if (idx === 0) {
+          return String(sysVals[col.id] ?? storeVals[col.id] ?? '');
+        }
+        return '';
+      });
+
+      const storeValues = STORE_COLUMNS.map((col) => {
+        return String(storeVals[col.id] || '');
+      });
+
       return {
         storeCode: s.code,
         storeName: s.name,
-        values: values,
+        systemValues: systemValues,
+        storeValues: storeValues,
+        // Combined values array: 7 system cols + 25 store cols
+        values: [...systemValues, ...storeValues],
       };
     });
 
@@ -77,6 +97,7 @@ export default function App() {
       time: String(data.sendTime || getSystemTime()),
       reporter: String(data.reporter || ''),
       location: 'Toàn hệ thống (6 cơ sở)',
+      systemEvaluation: data.systemEvaluation,
       storesList: storesList,
       stores: data.stores,
     };
@@ -258,10 +279,14 @@ export default function App() {
     }
     // ================== BÁO CÁO TQL - 6 CƠ SỞ (SHEET17 / BC TQL) ==================
     else if (sheetName === "Sheet17" || sheetName === "BC TQL" || sheetName === "BC TQL 1") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (29 CỘT THEO CHUẨN MẪU BẢNG)
+      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (36 CỘT: 3 CỘT ĐẦU + 7 CỘT TOÀN CHUỖI + 1 CỘT CƠ SỞ + 25 CỘT NGHIỆP VỤ)
       if (sheet.getLastRow() === 0) {
         var headersTQL = [
-          "Thời gian gửi", "Ngày", "Người báo cáo", "CH lv chính",
+          "Thời gian gửi", "Ngày", "Người báo cáo",
+          // ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 cột - đã xóa cột trùng)
+          "DT toàn hệ thống:", "Mục tiêu ngày:", "Tăng/giảm so với hôm trc:", "Tổng lượt khách:", "Số bàn phục vụ:", "DT TB/khách:", "Xếp hạng DT:",
+          // CH lv chính (Đưa về SAU Đánh giá chung toàn chuỗi)
+          "CH lv chính",
           // PHỤC VỤ (7 cột)
           "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
           // NHÂN SỰ (5 cột)
@@ -292,10 +317,25 @@ export default function App() {
           var storeRow = [
             timeVal,
             dateVal,
-            reporterVal,
-            st.storeCode || st.storeName || ""
+            reporterVal
           ];
-          if (st.values && Array.isArray(st.values)) {
+          
+          // 7 cột Đánh giá chung toàn chuỗi
+          if (st.systemValues && Array.isArray(st.systemValues)) {
+            st.systemValues.forEach(function(val) {
+              storeRow.push(val !== undefined ? String(val) : "");
+            });
+          }
+          
+          // Cột CH lv chính (sau Đánh giá chung toàn chuỗi)
+          storeRow.push(st.storeCode || st.storeName || "");
+          
+          // 25 cột nghiệp vụ từng cơ sở
+          if (st.storeValues && Array.isArray(st.storeValues)) {
+            st.storeValues.forEach(function(val) {
+              storeRow.push(val !== undefined ? String(val) : "");
+            });
+          } else if (st.values && Array.isArray(st.values)) {
             st.values.forEach(function(val) {
               storeRow.push(val !== undefined ? String(val) : "");
             });
@@ -304,7 +344,10 @@ export default function App() {
         });
       } else if (data.stores) {
         var storeCodes = ["01 DD", "03 NVH", "12 ĐT", "94 LĐ", "96 HT", "98 VTP"];
-        var fieldKeys = [
+        var systemKeys = [
+          "dt_toan_he_thong", "muc_tieu_ngay", "tang_giam_hom_truoc", "tong_luot_khach", "so_ban_phuc_vu", "dt_tb_khach", "xep_hang_dt"
+        ];
+        var storeKeys = [
           "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
           "tong_ns_di_lam", "ns_nghi_dot_xuat", "ns_nghi_han", "ns_moi", "ns_ho_tro",
           "phan_hoi_khach_bia", "vd_phat_sinh_bia", "cach_giai_quyet_bia", "xuat_ban_tiec",
@@ -312,10 +355,23 @@ export default function App() {
           "hong_hoc_can_sua", "hang_muc_sua_trong_ngay",
           "dao_tao", "doi_ngoai"
         ];
-        storeCodes.forEach(function(code) {
+        var sysVals = data.systemEvaluation || {};
+        storeCodes.forEach(function(code, idx) {
           var storeVals = data.stores[code] || {};
-          var storeRow = [timeVal, dateVal, reporterVal, code];
-          fieldKeys.forEach(function(k) {
+          var storeRow = [timeVal, dateVal, reporterVal];
+          // 7 cột toàn chuỗi: chỉ ghi ở dòng đầu tiên (01 DD) theo Phương án 1
+          systemKeys.forEach(function(k) {
+            if (idx === 0) {
+              var val = sysVals[k] !== undefined ? sysVals[k] : (storeVals[k] !== undefined ? storeVals[k] : "");
+              storeRow.push(String(val));
+            } else {
+              storeRow.push("");
+            }
+          });
+          // Cột CH lv chính (sau Đánh giá chung toàn chuỗi)
+          storeRow.push(code);
+          // 25 cột nghiệp vụ cơ sở
+          storeKeys.forEach(function(k) {
             storeRow.push(storeVals[k] !== undefined ? String(storeVals[k]) : "");
           });
           sheet.appendRow(storeRow);
@@ -453,7 +509,7 @@ export default function App() {
                   Báo Cáo TQL - Quán Bia
                 </h1>
                 <p className="text-[11px] text-slate-500 hidden sm:block">
-                  Mẫu bảng tổng hợp 6 cơ sở (29 cột) • Lưu vào Google Sheet: <strong className="text-indigo-700">{targetSheetName}</strong>
+                  Mẫu bảng tổng hợp 6 cơ sở (37 cột) • Lưu vào Google Sheet: <strong className="text-indigo-700">{targetSheetName}</strong>
                 </p>
               </div>
             </div>
@@ -649,7 +705,7 @@ export default function App() {
             {/* Scrollable Container with Scaled Preview */}
             <div className="bg-slate-800/5 rounded-2xl p-2 sm:p-4 border border-slate-300 shadow-inner overflow-hidden">
               <div className="text-[11px] text-slate-500 mb-2 flex items-center justify-between">
-                <span>Cuộn ngang để xem tất cả 29 cột. Khi bấm xuất ảnh, file tải về đạt độ nét 100%.</span>
+                <span>Cuộn ngang để xem tất cả 37 cột. Khi bấm xuất ảnh, file tải về đạt độ nét 100%.</span>
               </div>
 
               <div
@@ -701,7 +757,7 @@ export default function App() {
                     Mã Google Apps Script tích hợp cho Sheet17 (BC TQL)
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Đã tích hợp đầy đủ các báo cáo: BC CX, BC Bar, BC Tổng Bar, <strong>Sheet17 / BC TQL (29 cột)</strong>, BC sale sỉ, BC Bếp.
+                    Đã tích hợp đầy đủ các báo cáo: BC CX, BC Bar, BC Tổng Bar, <strong>Sheet17 / BC TQL (37 cột)</strong>, BC sale sỉ, BC Bếp.
                   </p>
                 </div>
               </div>
