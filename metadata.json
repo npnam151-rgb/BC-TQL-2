@@ -1,0 +1,6 @@
+{
+  "name": "Remix CS Báo cáo TQL 21/9",
+  "description": "Ứng dụng lập và xuất báo cáo TQL theo mẫu bảng tính 6 cơ sở (Phục vụ, Nhân sự, Bia, Món ăn, Sửa chữa, Đào tạo, Đối ngoại).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
