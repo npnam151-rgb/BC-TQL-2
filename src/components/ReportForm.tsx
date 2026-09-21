@@ -117,9 +117,10 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
     return Object.values(storeVals).filter((v) => typeof v === 'string' && v.trim().length > 0).length;
   };
 
-  const filledSystemCount = SYSTEM_COLUMNS.filter(
-    (col) => Boolean(data.systemEvaluation?.[col.id]?.trim())
-  ).length;
+  const totalSystemFields = SYSTEM_COLUMNS.length + 1;
+  const filledSystemCount =
+    SYSTEM_COLUMNS.filter((col) => Boolean(data.systemEvaluation?.[col.id]?.trim())).length +
+    (Boolean(data.systemEvaluation?.y_kien_khac?.trim()) ? 1 : 0);
 
   const currentStoreValues = data.stores[activeStore] || createEmptyStoreValues();
 
@@ -290,6 +291,31 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
                   </div>
                 );
               })}
+            </div>
+
+            {/* Mục Ý KIẾN KHÁC (Chung toàn chuỗi, không riêng cơ sở nào) */}
+            <div className="mt-4 pt-4 border-t border-slate-200">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 mb-1.5">
+                <label className="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+                  <span className="uppercase text-indigo-900 tracking-wider">Ý KIẾN KHÁC:</span>
+                  {data.systemEvaluation?.y_kien_khac && (
+                    <CheckCircle className="w-3.5 h-3.5 text-emerald-600 inline" />
+                  )}
+                </label>
+                <span className="text-[11px] text-indigo-700 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-200 self-start sm:self-auto font-medium">
+                  Thuộc phần Chung toàn chuỗi • Gộp ô xuyên suốt 6 cơ sở ở cuối bảng
+                </span>
+              </div>
+              <textarea
+                rows={2}
+                value={data.systemEvaluation?.y_kien_khac || ''}
+                placeholder="Nhập nhận xét, kiến nghị, giải pháp hoặc ý kiến khác cho toàn hệ thống..."
+                onChange={(e) => handleSystemFieldChange('y_kien_khac', e.target.value)}
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm font-medium focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none bg-white text-slate-800 transition-colors placeholder:text-slate-400"
+              />
+              <p className="text-[11px] text-slate-400 mt-1 italic">
+                Ví dụ: Toàn chuỗi vận hành ổn định trong khung giờ cao điểm. Đề xuất tuần tới bổ sung thêm 200 cốc bia chuẩn cho 94 LĐ và 98 VTP.
+              </p>
             </div>
           </div>
         )}

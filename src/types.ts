@@ -80,6 +80,15 @@ export const SYSTEM_REPORT_GROUP: ReportGroupDef = {
   ],
 };
 
+// Cột Ý KIẾN KHÁC (Thuộc phần Chung toàn chuỗi, không riêng cơ sở nào, hiển thị ở cuối bảng)
+export const SYSTEM_OTHER_OPINION_COLUMN: ReportColumnDef = {
+  id: 'y_kien_khac',
+  header: 'Ý kiến khác:',
+  groupKey: 'y_kien_khac',
+  placeholder: 'Nhận xét, kiến nghị chung cho toàn chuỗi...',
+  example: 'Toàn hệ thống vận hành trơn tru; đề xuất bổ sung thêm 200 cốc bia chuẩn cho 94 LĐ và 98 VTP',
+};
+
 export const STORE_REPORT_GROUPS: ReportGroupDef[] = [
   {
     key: 'phuc_vu',
@@ -348,6 +357,7 @@ export const createEmptySystemEvaluation = (): SystemEvaluationValues => {
   SYSTEM_COLUMNS.forEach(col => {
     values[col.id] = '';
   });
+  values['y_kien_khac'] = '';
   return values;
 };
 
@@ -575,6 +585,13 @@ const POOLS = {
     'Xe của khách được xếp ngay ngắn trong vạch quy định, giao thông thông suốt',
     'Mọi việc đối ngoại trong ngày diễn ra êm đẹp, không phát sinh vấn đề',
   ],
+  yKienKhacToanChuoi: [
+    'Toàn chuỗi vận hành ổn định trong khung giờ cao điểm. Đề xuất tuần tới bổ sung thêm 200 cốc bia chuẩn cho 94 LĐ và 98 VTP, đồng thời lên kế hoạch kiểm tra chất lượng nguồn đá chung.',
+    'Các cơ sở bám sát mục tiêu doanh thu ngày. Kế hoạch đào tạo upsell món nhậu mới mang lại hiệu quả rõ rệt. Nhắc nhở chung các TQL kiểm soát chặt chẽ hao hụt bia tươi cuối ca.',
+    'Tình hình toàn hệ thống ngày cuối tuần rất khả quan. Đề xuất phòng vận hành hỗ trợ thêm 2 nhân sự tăng cường cho 12 ĐT vào thứ 7 và chủ nhật tới.',
+    'Toàn chuỗi đảm bảo tốt an ninh trật tự và vệ sinh ATTP. Tiếp tục duy trì phong độ phục vụ nhiệt tình, đón tiếp khách chu đáo.',
+    'Đề xuất bộ phận kho tổng kiểm tra và cân đối lại lượng bia lon dự phòng cho 01 DD và 03 NVH trước đợt nắng nóng tuần sau.',
+  ],
 };
 
 /**
@@ -621,7 +638,7 @@ export const getRandomReportData = (): TQLReportData => {
   const totalTables = storeRevenues.reduce((acc, cur) => acc + cur.tables, 0);
   const avgPerGuestSystem = Math.round((totalRev * 1000) / Math.max(1, totalGuests));
 
-  // 1. ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 chỉ số cấp hệ thống)
+  // 1. ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 chỉ số cấp hệ thống + Ý kiến khác toàn chuỗi)
   base.systemEvaluation = {
     dt_toan_he_thong: `${totalRev.toFixed(1)} tr`,
     muc_tieu_ngay: `${totalTarget.toFixed(1)} tr`,
@@ -630,6 +647,7 @@ export const getRandomReportData = (): TQLReportData => {
     so_ban_phuc_vu: `${totalTables} bàn`,
     dt_tb_khach: `${avgPerGuestSystem}k/khách`,
     xep_hang_dt: rankingSummary,
+    y_kien_khac: randomPick(POOLS.yKienKhacToanChuoi),
   };
 
   // 2. Điền 25 hạng mục nghiệp vụ cho từng cơ sở (không lặp lại 8 cột toàn chuỗi)

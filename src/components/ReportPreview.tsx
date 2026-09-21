@@ -136,6 +136,14 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                     </th>
                   );
                 })}
+
+                {/* 4. Cột Ý KIẾN KHÁC: Thuộc phần Chung toàn chuỗi, đặt ở cuối bảng theo mẫu, rowSpan=2 */}
+                <th
+                  rowSpan={2}
+                  className="p-2 text-center font-extrabold uppercase border-r border-slate-400 tracking-wider bg-slate-100 align-middle min-w-[140px] max-w-[220px]"
+                >
+                  Ý KIẾN KHÁC
+                </th>
               </tr>
 
               {/* Header Row 2: Sub-columns */}
@@ -256,6 +264,20 @@ export const ReportPreview = forwardRef<HTMLDivElement, ReportPreviewProps>(
                         );
                       });
                     })}
+
+                    {/* Cột Ý KIẾN KHÁC: Thuộc phần Chung toàn chuỗi (không riêng cơ sở nào), gộp ô (rowSpan = 6) dọc xuyên suốt 6 cơ sở */}
+                    {idx === 0 && (
+                      <td
+                        rowSpan={storesToRender.length}
+                        className="p-2.5 align-top border-r border-slate-400 text-slate-900 text-[11px] leading-relaxed break-words whitespace-pre-wrap bg-white min-w-[140px] max-w-[220px]"
+                      >
+                        {data.systemEvaluation?.y_kien_khac ? (
+                          <span className="font-normal text-slate-800">{data.systemEvaluation.y_kien_khac}</span>
+                        ) : (
+                          <span className="text-slate-300 select-none">—</span>
+                        )}
+                      </td>
+                    )}
                   </tr>
                 );
               })}

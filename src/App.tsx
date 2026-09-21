@@ -81,13 +81,17 @@ export default function App() {
         return String(storeVals[col.id] || '');
       });
 
+      // Cột Ý KIẾN KHÁC: Thuộc phần Chung toàn chuỗi, đặt ở cuối bảng (chỉ hàng 01 DD có giá trị)
+      const otherOpinionValue = idx === 0 ? String(sysVals.y_kien_khac || '') : '';
+
       return {
         storeCode: s.code,
         storeName: s.name,
         systemValues: systemValues,
         storeValues: storeValues,
-        // Combined values array: 7 system cols + 25 store cols
-        values: [...systemValues, ...storeValues],
+        otherOpinionValue: otherOpinionValue,
+        // Combined values array: 7 system cols + 25 store cols + 1 other opinion col
+        values: [...systemValues, ...storeValues, otherOpinionValue],
       };
     });
 
@@ -300,7 +304,9 @@ export default function App() {
           // ĐÀO TẠO (1 cột)
           "Đào tạo:",
           // ĐỐI NGOẠI (1 cột)
-          "Đối ngoại:"
+          "Đối ngoại:",
+          // Ý KIẾN KHÁC (1 cột - thuộc phần Chung toàn chuỗi, gộp ô ở cuối)
+          "Ý KIẾN KHÁC"
         ];
         sheet.appendRow(headersTQL);
         sheet.getRange(1, 1, 1, headersTQL.length).setFontWeight("bold").setBackground("#f3f4f6");
@@ -340,6 +346,12 @@ export default function App() {
               storeRow.push(val !== undefined ? String(val) : "");
             });
           }
+
+          // Cột Ý KIẾN KHÁC (ở cuối bảng)
+          if (st.otherOpinionValue !== undefined) {
+            storeRow.push(String(st.otherOpinionValue));
+          }
+
           sheet.appendRow(storeRow);
         });
       } else if (data.stores) {
@@ -374,6 +386,12 @@ export default function App() {
           storeKeys.forEach(function(k) {
             storeRow.push(storeVals[k] !== undefined ? String(storeVals[k]) : "");
           });
+          // Cột Ý KIẾN KHÁC (ở cuối bảng): chỉ ghi ở dòng đầu tiên (01 DD)
+          if (idx === 0) {
+            storeRow.push(sysVals.y_kien_khac ? String(sysVals.y_kien_khac) : "");
+          } else {
+            storeRow.push("");
+          }
           sheet.appendRow(storeRow);
         });
       }
