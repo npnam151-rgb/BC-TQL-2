@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { toPng } from 'html-to-image';
 import {
   Download,
@@ -12,8 +12,8 @@ import {
   FileCode,
   Copy,
   Check,
-  Edit3,
   X,
+  Info,
 } from 'lucide-react';
 import { ReportForm } from './components/ReportForm';
 import { ReportPreview } from './components/ReportPreview';
@@ -31,30 +31,27 @@ import {
 const GOOGLE_SHEET_WEBHOOK_URL =
   'https://script.google.com/macros/s/AKfycbxWKIm74psex5-61MTbeSZKTyA5_K8GBE2MzZ3iOcn7bu1ekM7NqvGXDOJLmz88iDGQ/exec';
 
+// Tên sheet cố định theo chuẩn hệ thống
+const TARGET_SHEET_NAME = 'BC TQL';
+
 export default function App() {
   const [reportData, setReportData] = useState<TQLReportData>(createInitialReportData());
   const [isExporting, setIsExporting] = useState(false);
   const [exportSuccess, setExportSuccess] = useState(false);
   const [sheetStatus, setSheetStatus] = useState<'idle' | 'saving' | 'success' | 'error'>('idle');
   const [showAllStores, setShowAllStores] = useState(true);
-  const [zoomScale, setZoomScale] = useState(0.55); // Default scale for nice preview fit
-
-  // Target sheet name: default 'Sheet17' per user request, configurable for future rename
-  const [targetSheetName, setTargetSheetName] = useState<string>(() => {
-    return localStorage.getItem('tql_sheet_target') || 'Sheet17';
-  });
-  const [isEditingSheetName, setIsEditingSheetName] = useState(false);
-  const [tempSheetName, setTempSheetName] = useState(targetSheetName);
+  const [zoomScale, setZoomScale] = useState(0.7); // Scale for clean transposed matrix preview
 
   // Script modal state
   const [showScriptModal, setShowScriptModal] = useState(false);
   const [copiedScript, setCopiedScript] = useState(false);
 
-  const previewRef = useRef<HTMLDivElement>(null);
+  // Modal preview image state
+  const [previewImageModal, setPreviewImageModal] = useState<string | null>(null);
+  const [isCopiedImage, setIsCopiedImage] = useState(false);
+  const [copyImageError, setCopyImageError] = useState<string | null>(null);
 
-  useEffect(() => {
-    localStorage.setItem('tql_sheet_target', targetSheetName);
-  }, [targetSheetName]);
+  const previewRef = useRef<HTMLDivElement>(null);
 
   const saveToGoogleSheets = async (data: TQLReportData) => {
     if (!GOOGLE_SHEET_WEBHOOK_URL) {
@@ -65,7 +62,7 @@ export default function App() {
     // Build storesList for 6 stores with values in the exact format:
     // 7 Cột Đánh giá chung toàn chuỗi (chỉ hàng 01 DD có giá trị, các hàng sau để "")
     // CH lv chính (từng cơ sở: 01 DD, 03 NVH, ...)
-    // 25 Cột kiểm tra nghiệp vụ cơ sở
+    // 26 Cột kiểm tra nghiệp vụ cơ sở
     const storesList = STORES.map((s, idx) => {
       const storeVals = data.stores[s.code] || {};
       const sysVals = data.systemEvaluation || {};
@@ -90,13 +87,13 @@ export default function App() {
         systemValues: systemValues,
         storeValues: storeValues,
         otherOpinionValue: otherOpinionValue,
-        // Combined values array: 7 system cols + 25 store cols + 1 other opinion col
+        // Combined values array: 7 system cols + 26 store cols + 1 other opinion col
         values: [...systemValues, ...storeValues, otherOpinionValue],
       };
     });
 
     const payload = {
-      sheetName: targetSheetName || 'Sheet17',
+      sheetName: TARGET_SHEET_NAME,
       date: String(data.date || ''),
       time: String(data.sendTime || getSystemTime()),
       reporter: String(data.reporter || ''),
@@ -109,30 +106,68 @@ export default function App() {
     try {
       setSheetStatus('saving');
 
-      // Timeout promise to avoid infinite hang
-      const fetchPromise = fetch(GOOGLE_SHEET_WEBHOOK_URL, {
+      // AbortController with generous 30s timeout for Google Apps Script cold starts
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+      await fetch(GOOGLE_SHEET_WEBHOOK_URL, {
         method: 'POST',
         mode: 'no-cors',
+        cache: 'no-cache',
+        signal: controller.signal,
         headers: {
           'Content-Type': 'text/plain;charset=utf-8',
         },
         body: JSON.stringify(payload),
       });
 
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Timeout')), 8000)
-      );
-
-      await Promise.race([fetchPromise, timeoutPromise]);
-
-      console.log('Đã gửi dữ liệu lên Google Sheets vào sheet:', targetSheetName);
+      clearTimeout(timeoutId);
+      console.log('Đã gửi dữ liệu lên Google Sheets vào sheet:', TARGET_SHEET_NAME);
       setSheetStatus('success');
       return true;
-    } catch (error) {
-      console.error('Lỗi khi lưu vào Google Sheets:', error);
+    } catch (error: unknown) {
+      const isAbort = error instanceof Error && (error.name === 'AbortError' || error.message.includes('abort'));
+      if (isAbort) {
+        console.warn('Google Sheets phản hồi chậm quá 30 giây (có thể máy chủ Apps Script đang khởi động). Dữ liệu có thể vẫn được Google Sheets ghi nhận.');
+      } else {
+        console.warn('Lưu vào Google Sheets chưa hoàn tất:', error);
+      }
       setSheetStatus('error');
       return false;
     }
+  };
+
+  const handleCopyImageToClipboard = async () => {
+    if (!previewImageModal) return;
+    try {
+      const res = await fetch(previewImageModal);
+      const blob = await res.blob();
+      if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        const item = new ClipboardItem({ 'image/png': blob });
+        await navigator.clipboard.write([item]);
+        setIsCopiedImage(true);
+        setCopyImageError(null);
+        setTimeout(() => setIsCopiedImage(false), 3000);
+      } else {
+        throw new Error('ClipboardItem không được hỗ trợ');
+      }
+    } catch (err) {
+      console.warn('Lỗi khi copy ảnh vào clipboard:', err);
+      setCopyImageError(
+        'Trình duyệt không cho phép copy tự động. Bạn hãy chạm & giữ ngón tay vào ảnh bên dưới 1-2 giây rồi chọn "Sao chép" (Copy) / "Lưu vào Ảnh"!'
+      );
+      setTimeout(() => setCopyImageError(null), 6000);
+    }
+  };
+
+  const handleDownloadModalImage = () => {
+    if (!previewImageModal) return;
+    const dateStr = reportData.date || new Date().toISOString().split('T')[0];
+    const fileName = `BaoCao_TQL_HeThong6CoSo_${dateStr}.png`;
+    const link = document.createElement('a');
+    link.download = fileName;
+    link.href = previewImageModal;
+    link.click();
   };
 
   const handleExportImage = async () => {
@@ -140,7 +175,6 @@ export default function App() {
 
     setIsExporting(true);
     setExportSuccess(false);
-    setSheetStatus('idle');
 
     // Always ensure current system time before export
     const currentSendTime = getSystemTime();
@@ -151,11 +185,11 @@ export default function App() {
     setReportData(latestData);
 
     try {
-      // 1. Lưu dữ liệu lên Google Sheets vào Sheet17
-      await saveToGoogleSheets(latestData);
+      // 1. Kích hoạt lưu Google Sheets đồng thời (không làm chậm tiến trình tải ảnh)
+      const saveSheetPromise = saveToGoogleSheets(latestData);
 
-      // Đợi UI cập nhật trạng thái
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      // Đợi DOM render giờ gửi mới
+      await new Promise((resolve) => setTimeout(resolve, 200));
 
       // 2. Xuất ảnh chất lượng cao
       const dataUrl = await toPng(previewRef.current, {
@@ -164,33 +198,49 @@ export default function App() {
         backgroundColor: '#ffffff',
       });
 
-      const dateStr = latestData.date || new Date().toISOString().split('T')[0];
-      const fileName = `BaoCao_TQL_HeThong6CoSo_${dateStr}.png`;
-      const link = document.createElement('a');
-      link.download = fileName;
-      link.href = dataUrl;
-      link.click();
+      // Mở Popup xem trước ảnh dạng Modal
+      setPreviewImageModal(dataUrl);
 
-      setExportSuccess(true);
-      setTimeout(() => setExportSuccess(false), 5000);
-    } catch (err) {
-      console.error('Failed to export image', err);
-      // Fallback: Thử xuất ảnh trực tiếp nếu sheet bị lỗi/timeout
+      // Cố gắng tự động tải xuống nếu trình duyệt cho phép
       try {
-        const dataUrl = await toPng(previewRef.current, {
-          quality: 0.98,
-          pixelRatio: 2,
-          backgroundColor: '#ffffff',
-        });
         const dateStr = latestData.date || new Date().toISOString().split('T')[0];
         const fileName = `BaoCao_TQL_HeThong6CoSo_${dateStr}.png`;
         const link = document.createElement('a');
         link.download = fileName;
         link.href = dataUrl;
         link.click();
+      } catch (dlErr) {
+        console.warn('Tải xuống tự động bị chặn hoặc không được hỗ trợ:', dlErr);
+      }
+
+      // Đợi quá trình lưu sheet hoàn tất
+      await saveSheetPromise;
+
+      setExportSuccess(true);
+      setTimeout(() => setExportSuccess(false), 6000);
+    } catch (err) {
+      console.warn('Quá trình xuất ảnh báo cáo:', err);
+      // Fallback: Thử xuất ảnh trực tiếp nếu gặp trục trặc
+      try {
+        const dataUrl = await toPng(previewRef.current, {
+          quality: 0.98,
+          pixelRatio: 2,
+          backgroundColor: '#ffffff',
+        });
+        setPreviewImageModal(dataUrl);
+        try {
+          const dateStr = latestData.date || new Date().toISOString().split('T')[0];
+          const fileName = `BaoCao_TQL_HeThong6CoSo_${dateStr}.png`;
+          const link = document.createElement('a');
+          link.download = fileName;
+          link.href = dataUrl;
+          link.click();
+        } catch (innerDlErr) {
+          console.warn('Không thể tự động tải:', innerDlErr);
+        }
         setExportSuccess(true);
       } catch (innerErr) {
-        alert('Có lỗi xảy ra khi xuất ảnh. Vui lòng thử lại.');
+        console.warn('Không thể xuất ảnh preview:', innerErr);
       }
     } finally {
       setIsExporting(false);
@@ -201,13 +251,14 @@ export default function App() {
   try {
     var data = JSON.parse(e.postData.contents);
     
-    // Lấy tên sheet từ app gửi lên (mặc định "Sheet17", sau này đổi tên sheet thành "BC TQL" hoặc tên khác vẫn nhận)
-    var sheetName = data.sheetName || "Sheet17"; 
-    var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(sheetName);
+    // Tên sheet đích chuẩn cố định là "BC TQL"
+    var sheetName = data.sheetName || "BC TQL"; 
+    var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+    var sheet = spreadsheet.getSheetByName(sheetName);
     
+    // Tự động tạo sheet nếu chưa có
     if (!sheet) {
-      return ContentService.createTextOutput(JSON.stringify({"status": "error", "message": "Không tìm thấy sheet có tên '" + sheetName + "'"}))
-        .setMimeType(ContentService.MimeType.JSON);
+      sheet = spreadsheet.insertSheet(sheetName);
     }
     
     var row = [];
@@ -283,7 +334,7 @@ export default function App() {
     }
     // ================== BÁO CÁO TQL - 6 CƠ SỞ (SHEET17 / BC TQL) ==================
     else if (sheetName === "Sheet17" || sheetName === "BC TQL" || sheetName === "BC TQL 1") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (36 CỘT: 3 CỘT ĐẦU + 7 CỘT TOÀN CHUỖI + 1 CỘT CƠ SỞ + 25 CỘT NGHIỆP VỤ)
+      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (38 CỘT: 3 CỘT ĐẦU + 7 CỘT TOÀN CHUỖI + 1 CỘT CƠ SỞ + 26 CỘT NGHIỆP VỤ + 1 CỘT Ý KIẾN KHÁC)
       if (sheet.getLastRow() === 0) {
         var headersTQL = [
           "Thời gian gửi", "Ngày", "Người báo cáo",
@@ -291,8 +342,8 @@ export default function App() {
           "DT toàn hệ thống:", "Mục tiêu ngày:", "Tăng/giảm so với hôm trc:", "Tổng lượt khách:", "Số bàn phục vụ:", "DT TB/khách:", "Xếp hạng DT:",
           // CH lv chính (Đưa về SAU Đánh giá chung toàn chuỗi)
           "CH lv chính",
-          // PHỤC VỤ (7 cột)
-          "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
+          // PHỤC VỤ (8 cột)
+          "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Chương trình KM:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
           // NHÂN SỰ (5 cột)
           "Tổng NS bàn đi làm:", "NS nghỉ đột xuất:", "NS nghỉ hẳn:", "NS mới:", "NS hỗ trợ:",
           // BIA (4 cột)
@@ -336,7 +387,7 @@ export default function App() {
           // Cột CH lv chính (sau Đánh giá chung toàn chuỗi)
           storeRow.push(st.storeCode || st.storeName || "");
           
-          // 25 cột nghiệp vụ từng cơ sở
+          // 26 cột nghiệp vụ từng cơ sở
           if (st.storeValues && Array.isArray(st.storeValues)) {
             st.storeValues.forEach(function(val) {
               storeRow.push(val !== undefined ? String(val) : "");
@@ -360,7 +411,7 @@ export default function App() {
           "dt_toan_he_thong", "muc_tieu_ngay", "tang_giam_hom_truoc", "tong_luot_khach", "so_ban_phuc_vu", "dt_tb_khach", "xep_hang_dt"
         ];
         var storeKeys = [
-          "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
+          "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "chuong_trinh_km", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
           "tong_ns_di_lam", "ns_nghi_dot_xuat", "ns_nghi_han", "ns_moi", "ns_ho_tro",
           "phan_hoi_khach_bia", "vd_phat_sinh_bia", "cach_giai_quyet_bia", "xuat_ban_tiec",
           "mon_day", "mon_ban_chay", "phan_hoi_khach_mon", "vd_phat_sinh_mon", "cach_giai_quyet_mon",
@@ -504,14 +555,6 @@ export default function App() {
     setTimeout(() => setCopiedScript(false), 3000);
   };
 
-  const handleSaveSheetName = () => {
-    const trimmed = tempSheetName.trim();
-    if (trimmed) {
-      setTargetSheetName(trimmed);
-      setIsEditingSheetName(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-900">
       {/* Header */}
@@ -522,77 +565,12 @@ export default function App() {
               <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-xs">
                 <Table className="w-5 h-5" />
               </div>
-              <div>
-                <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
-                  Báo Cáo TQL - Quán Bia
-                </h1>
-                <p className="text-[11px] text-slate-500 hidden sm:block">
-                  Mẫu bảng tổng hợp 6 cơ sở (37 cột) • Lưu vào Google Sheet: <strong className="text-indigo-700">{targetSheetName}</strong>
-                </p>
-              </div>
+              <h1 className="text-lg sm:text-xl font-extrabold text-slate-900 tracking-tight">
+                Báo cáo TQL
+              </h1>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* Sheet target configuration badge */}
-              <div className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-lg text-xs">
-                <span className="text-slate-500">Sheet đích:</span>
-                {isEditingSheetName ? (
-                  <div className="flex items-center gap-1">
-                    <input
-                      type="text"
-                      value={tempSheetName}
-                      onChange={(e) => setTempSheetName(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleSaveSheetName()}
-                      className="w-24 px-1.5 py-0.5 border border-indigo-300 rounded text-xs font-bold text-indigo-900 outline-none"
-                      autoFocus
-                    />
-                    <button
-                      type="button"
-                      onClick={handleSaveSheetName}
-                      className="text-indigo-600 hover:text-indigo-800 font-bold text-[11px]"
-                    >
-                      Lưu
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTempSheetName(targetSheetName);
-                        setIsEditingSheetName(false);
-                      }}
-                      className="text-slate-400 hover:text-slate-600"
-                    >
-                      <X className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1">
-                    <strong className="text-indigo-700 font-bold">{targetSheetName}</strong>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTempSheetName(targetSheetName);
-                        setIsEditingSheetName(true);
-                      }}
-                      title="Bấm để đổi tên sheet nếu sau này bạn đổi tên trong Google Sheets"
-                      className="text-slate-400 hover:text-indigo-600 p-0.5"
-                    >
-                      <Edit3 className="w-3 h-3" />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* View Apps Script Modal button */}
-              <button
-                type="button"
-                onClick={() => setShowScriptModal(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-colors"
-                title="Xem mã Google Apps Script để dán vào trang tính"
-              >
-                <FileCode className="w-4 h-4 text-indigo-600" />
-                <span className="hidden sm:inline">Mã Apps Script</span>
-              </button>
-
+            <div className="flex items-center">
               {/* Export Button */}
               <button
                 onClick={handleExportImage}
@@ -602,12 +580,12 @@ export default function App() {
                 {isExporting ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    <span>{sheetStatus === 'saving' ? 'Đang lưu Sheet...' : 'Đang xuất ảnh...'}</span>
+                    <span>Đang xuất...</span>
                   </>
                 ) : (
                   <>
                     <Download className="w-4 h-4" />
-                    <span>Tải ảnh & Lưu Sheet</span>
+                    <span>Xuất báo cáo</span>
                   </>
                 )}
               </button>
@@ -635,19 +613,29 @@ export default function App() {
               )}
               <p className="text-sm font-medium">
                 {sheetStatus === 'error'
-                  ? `Đã tải ảnh thành công! (Lưu ý: Không thể đồng bộ vào sheet '${targetSheetName}', vui lòng kiểm tra xem bạn đã dán mã Apps Script mới chưa).`
-                  : `Đã tải ảnh báo cáo độ phân giải cao thành công và lưu 6 dòng cơ sở vào sheet '${targetSheetName}'!`}
+                  ? `Đã tải ảnh thành công! (Lưu ý: Chưa thể đồng bộ ngay vào sheet '${TARGET_SHEET_NAME}'. Bạn có thể bấm 'Thử lưu lại' hoặc kiểm tra mã Apps Script).`
+                  : `Đã tải ảnh báo cáo độ phân giải cao thành công và lưu 6 dòng cơ sở vào sheet '${TARGET_SHEET_NAME}'!`}
               </p>
             </div>
-            {sheetStatus === 'error' && (
-              <button
-                type="button"
-                onClick={() => setShowScriptModal(true)}
-                className="text-xs font-bold text-amber-800 underline hover:text-amber-950 shrink-0"
-              >
-                Xem mã Apps Script
-              </button>
-            )}
+            {sheetStatus === 'error' ? (
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => saveToGoogleSheets(reportData)}
+                  disabled={sheetStatus === 'saving'}
+                  className="px-2.5 py-1 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 border border-amber-300 rounded-md transition-colors cursor-pointer"
+                >
+                  {sheetStatus === 'saving' ? 'Đang gửi...' : 'Thử lưu lại'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowScriptModal(true)}
+                  className="text-xs font-bold text-amber-800 underline hover:text-amber-950 shrink-0 cursor-pointer"
+                >
+                  Mã Apps Script
+                </button>
+              </div>
+            ) : null}
           </div>
         )}
 
@@ -711,8 +699,8 @@ export default function App() {
                 {/* Reset fit */}
                 <button
                   type="button"
-                  title="Vừa khung nhìn (55%)"
-                  onClick={() => setZoomScale(0.55)}
+                  title="Vừa khung nhìn (70%)"
+                  onClick={() => setZoomScale(0.7)}
                   className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-50 text-slate-600 transition-colors"
                 >
                   <Maximize2 className="w-3.5 h-3.5" />
@@ -723,7 +711,7 @@ export default function App() {
             {/* Scrollable Container with Scaled Preview */}
             <div className="bg-slate-800/5 rounded-2xl p-2 sm:p-4 border border-slate-300 shadow-inner overflow-hidden">
               <div className="text-[11px] text-slate-500 mb-2 flex items-center justify-between">
-                <span>Cuộn ngang để xem tất cả 37 cột. Khi bấm xuất ảnh, file tải về đạt độ nét 100%.</span>
+                <span>Ma trận đối chiếu 6 cơ sở theo chiều dọc chuẩn Zalo/Điện thoại. Khi xuất ảnh đạt độ nét 100%.</span>
               </div>
 
               <div
@@ -747,17 +735,6 @@ export default function App() {
                 </div>
               </div>
             </div>
-
-            {/* Quick Helper Notes */}
-            <div className="bg-indigo-50/70 border border-indigo-200 rounded-xl p-3.5 text-xs text-indigo-950 flex items-start gap-2.5">
-              <Table className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-bold mb-0.5">Tích hợp Google Sheets ({targetSheetName}):</p>
-                <p className="text-indigo-900 leading-relaxed">
-                  Dữ liệu được gửi tự động với 6 dòng (tương ứng 6 cơ sở: 01 DD, 03 NVH, 12 ĐT, 94 LĐ, 96 HT, 98 VTP). Sau này nếu bạn đổi tên sheet trong Google Sheets từ <strong>{targetSheetName}</strong> sang tên khác (ví dụ <em>BC TQL</em>), chỉ cần bấm vào biểu tượng cây bút ở góc trên để cập nhật lại tên sheet.
-                </p>
-              </div>
-            </div>
           </div>
         </div>
       </main>
@@ -772,17 +749,17 @@ export default function App() {
                 <FileCode className="w-5 h-5 text-indigo-600" />
                 <div>
                   <h3 className="text-base font-bold text-slate-900">
-                    Mã Google Apps Script tích hợp cho Sheet17 (BC TQL)
+                    Mã Google Apps Script mới cho sheet {TARGET_SHEET_NAME}
                   </h3>
                   <p className="text-xs text-slate-500">
-                    Đã tích hợp đầy đủ các báo cáo: BC CX, BC Bar, BC Tổng Bar, <strong>Sheet17 / BC TQL (37 cột)</strong>, BC sale sỉ, BC Bếp.
+                    Đã tích hợp đầy đủ 38 cột chuẩn (kèm cột <em>Chương trình KM</em> và <em>Ý KIẾN KHÁC</em>). Tự động tạo tab <strong>{TARGET_SHEET_NAME}</strong> nếu chưa có.
                   </p>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setShowScriptModal(false)}
-                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors"
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-lg transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -802,7 +779,7 @@ export default function App() {
                 <button
                   type="button"
                   onClick={handleCopyScript}
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all cursor-pointer"
                 >
                   {copiedScript ? (
                     <>
@@ -822,6 +799,108 @@ export default function App() {
         </div>
       )}
 
+      {/* Modal Ảnh Báo Cáo Hoàn Chỉnh */}
+      {previewImageModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-900/70 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white rounded-2xl sm:rounded-3xl max-w-xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden border border-slate-200 animate-in zoom-in-95 duration-150">
+            {/* Modal Header */}
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-start justify-between bg-white">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-extrabold text-slate-900">
+                  Ảnh Báo Cáo Hoàn Chỉnh
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
+                  Bấm copy hoặc chạm giữ vào ảnh để lưu/gửi
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-full transition-colors cursor-pointer"
+                aria-label="Đóng"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Mẹo gửi nhanh Banner */}
+            <div className="bg-amber-50/90 border-y border-amber-200/80 px-4 py-3 sm:px-5 sm:py-3.5 flex items-start gap-3 text-amber-950">
+              <div className="p-1 bg-amber-100 rounded-full text-amber-700 shrink-0 mt-0.5">
+                <Info className="w-4 h-4" />
+              </div>
+              <div className="text-xs sm:text-sm leading-relaxed">
+                <strong className="block font-bold text-amber-900 mb-0.5">Mẹo gửi nhanh:</strong>
+                Bấm nút <strong className="text-indigo-900 font-bold">"Copy ảnh"</strong> để dán trực tiếp vào Zalo/Tin nhắn, hoặc chạm và giữ ngón tay vào ảnh bên dưới trong 1-2 giây rồi chọn <strong className="text-amber-950">"Sao chép" (Copy)</strong> / <strong className="text-amber-950">"Lưu vào Ảnh"</strong>.
+              </div>
+            </div>
+
+            {/* Scrollable Image Preview Area */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-5 bg-slate-100/70 flex items-center justify-center">
+              <img
+                src={previewImageModal}
+                alt="Ảnh Báo Cáo Hoàn Chỉnh"
+                className="w-full h-auto object-contain rounded-xl shadow-md border border-slate-200 select-all"
+                referrerPolicy="no-referrer"
+              />
+            </div>
+
+            {/* Copy Error Banner if any */}
+            {copyImageError && (
+              <div className="px-4 py-2 bg-amber-100 border-t border-amber-200 text-xs text-amber-900 font-medium text-center">
+                {copyImageError}
+              </div>
+            )}
+
+            {/* Modal Footer */}
+            <div className="p-4 sm:p-5 border-t border-slate-100 bg-white space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {/* Nút Copy ảnh */}
+                <button
+                  type="button"
+                  onClick={handleCopyImageToClipboard}
+                  className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm transition-all shadow-sm cursor-pointer ${
+                    isCopiedImage
+                      ? 'bg-emerald-600 text-white shadow-emerald-200'
+                      : 'bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white shadow-indigo-200'
+                  }`}
+                >
+                  {isCopiedImage ? (
+                    <>
+                      <Check className="w-5 h-5" />
+                      <span>Đã copy ảnh!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-5 h-5" />
+                      <span>Copy ảnh</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Nút Tải ảnh */}
+                <button
+                  type="button"
+                  onClick={handleDownloadModalImage}
+                  className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl font-bold text-sm bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-800 border border-slate-200 transition-all cursor-pointer"
+                >
+                  <Download className="w-5 h-5" />
+                  <span>Tải ảnh</span>
+                </button>
+              </div>
+
+              {/* Nút Đóng */}
+              <button
+                type="button"
+                onClick={() => setPreviewImageModal(null)}
+                className="w-full py-2 text-center text-sm font-bold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer"
+              >
+                Đóng
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Mobile Fixed Bottom Action Bar */}
       <div className="xl:hidden fixed bottom-0 left-0 right-0 p-3 bg-white/95 backdrop-blur-sm border-t border-slate-200 shadow-[0_-8px_20px_-3px_rgba(0,0,0,0.08)] z-40">
         <div className="max-w-md mx-auto flex items-center gap-2">
@@ -833,12 +912,12 @@ export default function App() {
             {isExporting ? (
               <>
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                <span>{sheetStatus === 'saving' ? 'Đang lưu Sheet...' : 'Đang xuất ảnh...'}</span>
+                <span>Đang xuất...</span>
               </>
             ) : (
               <>
                 <Download className="w-4 h-4" />
-                <span>Tải ảnh & Lưu vào {targetSheetName}</span>
+                <span>Xuất báo cáo</span>
               </>
             )}
           </button>

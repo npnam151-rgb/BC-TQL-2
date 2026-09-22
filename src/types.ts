@@ -123,6 +123,13 @@ export const STORE_REPORT_GROUPS: ReportGroupDef[] = [
         example: 'Bia ra ngay sau 2 phút, đồ ăn 5-10 phút đúng chuẩn',
       },
       {
+        id: 'chuong_trinh_km',
+        header: 'Chương trình KM:',
+        groupKey: 'phuc_vu',
+        placeholder: 'Triển khai CTKM, tư vấn ưu đãi cho khách, áp dụng voucher/tặng bia...',
+        example: 'Tư vấn tốt CTKM tặng 1 tháp bia cho bàn từ 6 người, khách hưởng ứng',
+      },
+      {
         id: 've_sinh',
         header: 'Vệ sinh:',
         groupKey: 'phuc_vu',
@@ -323,10 +330,10 @@ export const REPORT_GROUPS: ReportGroupDef[] = [
 // Flat list of 8 system evaluation columns
 export const SYSTEM_COLUMNS: ReportColumnDef[] = SYSTEM_REPORT_GROUP.columns;
 
-// Flat list of 25 store inspection columns
+// Flat list of 26 store inspection columns
 export const STORE_COLUMNS: ReportColumnDef[] = STORE_REPORT_GROUPS.flatMap(g => g.columns);
 
-// Flat list of all 33 inspection field columns
+// Flat list of all 34 inspection field columns
 export const ALL_COLUMNS: ReportColumnDef[] = [...SYSTEM_COLUMNS, ...STORE_COLUMNS];
 
 export interface SystemEvaluationValues {
@@ -434,6 +441,14 @@ const POOLS = {
     'Đạt chuẩn: 3 phút món khai vị, 8 phút món chính',
     'Kiểm soát bill tốt, ra đồ theo đúng thứ tự bàn gọi',
     'Bếp và bar phối hợp nhịp nhàng, ra đồ đồng bộ chuẩn ca',
+  ],
+  chuongTrinhKM: [
+    'Tư vấn tốt CTKM tặng 1 tháp bia cho bàn từ 6 người, khách hưởng ứng',
+    'Nhân viên phổ biến rõ chương trình giảm 10% giờ vàng trưa cho khách văn phòng',
+    'Chạy tốt CTKM combo nướng + bia hơi, khách phản hồi rất tích cực',
+    'Áp dụng voucher tặng món khai vị cho khách check-in đúng quy trình',
+    'Tư vấn nhiệt tình ưu đãi sinh nhật tặng bánh và giảm 15% đồ uống',
+    'Nhân viên nắm vững thể lệ CTKM tháng, không có sai sót khi chốt bill',
   ],
   veSinh: [
     'Sạch sẽ, dọn bàn nhanh, khu WC kiểm tra 30p/lần khô ráo thơm tho',
@@ -650,16 +665,17 @@ export const getRandomReportData = (): TQLReportData => {
     y_kien_khac: randomPick(POOLS.yKienKhacToanChuoi),
   };
 
-  // 2. Điền 25 hạng mục nghiệp vụ cho từng cơ sở (không lặp lại 8 cột toàn chuỗi)
+  // 2. Điền 26 hạng mục nghiệp vụ cho từng cơ sở (không lặp lại 8 cột toàn chuỗi)
   storeRevenues.forEach((item) => {
     const code = item.code;
 
     base.stores[code] = {
-      // PHỤC VỤ (7 cột)
+      // PHỤC VỤ (8 cột)
       xep_ban: randomPick(POOLS.xepBan),
       order_tu_van: randomPick(POOLS.orderTuVan),
       cham_soc_upsell: randomPick(POOLS.chamSocUpsell),
       toc_do_ra_do: randomPick(POOLS.tocDoRaDo),
+      chuong_trinh_km: randomPick(POOLS.chuongTrinhKM),
       ve_sinh: randomPick(POOLS.veSinh),
       vd_phat_sinh_pv: randomPick(POOLS.vdPhatSinhPV),
       cach_giai_quyet_pv: randomPick(POOLS.cachGiaiQuyetPV),

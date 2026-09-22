@@ -5,9 +5,9 @@ import {
   SYSTEM_REPORT_GROUP,
   STORE_REPORT_GROUPS,
   SYSTEM_COLUMNS,
+  STORE_COLUMNS,
   TQLReportData,
   createEmptyStoreValues,
-  getRandomReportData,
   getSystemTime,
 } from '../types';
 import {
@@ -16,7 +16,6 @@ import {
   User,
   Building2,
   TrendingUp,
-  Dices,
   RotateCcw,
   CheckCircle,
   ChevronDown,
@@ -91,12 +90,6 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
     });
   };
 
-  const handleLoadSample = () => {
-    const randomSample = getRandomReportData();
-    onChange(randomSample);
-    setActiveStore('01 DD');
-  };
-
   const handleClearCurrentStore = () => {
     const storeInfo = STORES.find((s) => s.code === activeStore);
     if (confirm(`Bạn có chắc muốn xóa toàn bộ nội dung đã nhập của cơ sở ${activeStore} (${storeInfo?.name})?`)) {
@@ -110,7 +103,7 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
     }
   };
 
-  // Count filled fields for a given store (25 fields)
+  // Count filled fields for a given store
   const getFilledCount = (code: StoreCode) => {
     const storeVals = data.stores[code];
     if (!storeVals) return 0;
@@ -140,29 +133,17 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
     <div className="space-y-6">
       {/* Top Header Card: Thông tin chung */}
       <div className="bg-white p-5 sm:p-6 rounded-xl shadow-sm border border-slate-200">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2.5">
-            <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
-              <Building2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h2 className="text-base sm:text-lg font-bold text-slate-900">
-                Thông tin báo cáo chung
-              </h2>
-              <p className="text-xs text-slate-500">
-                Báo cáo kiểm tra tổng quản lý (TQL) toàn bộ 6 cơ sở
-              </p>
-            </div>
+        <div className="flex items-center gap-2.5 mb-4">
+          <div className="p-2 bg-indigo-50 text-indigo-700 rounded-lg">
+            <Building2 className="w-5 h-5" />
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleLoadSample}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 rounded-lg border border-indigo-200 transition-colors shadow-2xs"
-            >
-              <Dices className="w-4 h-4 text-indigo-600" />
-              Nạp ngẫu nhiên (Random)
-            </button>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-slate-900">
+              Thông tin báo cáo chung
+            </h2>
+            <p className="text-xs text-slate-500">
+              Báo cáo kiểm tra tổng quản lý (TQL) toàn bộ 6 cơ sở
+            </p>
           </div>
         </div>
 
@@ -391,7 +372,7 @@ export function ReportForm({ data, onChange }: ReportFormProps) {
           </span>
         </div>
         <span className="text-xs text-slate-600">
-          Đã điền: <strong className="text-indigo-900">{getFilledCount(activeStore)}/25</strong> hạng mục
+          Đã điền: <strong className="text-indigo-900">{getFilledCount(activeStore)}/{STORE_COLUMNS.length}</strong> hạng mục
         </span>
       </div>
 
