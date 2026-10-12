@@ -91,6 +91,26 @@ export const SYSTEM_OTHER_OPINION_COLUMN: ReportColumnDef = {
 
 export const STORE_REPORT_GROUPS: ReportGroupDef[] = [
   {
+    key: 'sua_chua',
+    title: 'SỬA CHỮA',
+    columns: [
+      {
+        id: 'hong_hoc_can_sua',
+        header: 'Hỏng hóc cần sửa:',
+        groupKey: 'sua_chua',
+        placeholder: 'Thiết bị điện, nước, âm thanh, điều hòa cần bảo trì...',
+        example: 'Không có',
+      },
+      {
+        id: 'hang_muc_sua_trong_ngay',
+        header: 'Hạng mục sửa trong ngày:',
+        groupKey: 'sua_chua',
+        placeholder: 'Các thiết bị đã sửa chữa xong trong ngày...',
+        example: 'Bảo dưỡng định kỳ',
+      },
+    ],
+  },
+  {
     key: 'phuc_vu',
     title: 'PHỤC VỤ',
     columns: [
@@ -270,26 +290,6 @@ export const STORE_REPORT_GROUPS: ReportGroupDef[] = [
         groupKey: 'mon_an',
         placeholder: 'Cách xử lý của TQL và bếp...',
         example: 'Bếp ra đồ đều',
-      },
-    ],
-  },
-  {
-    key: 'sua_chua',
-    title: 'SỬA CHỮA',
-    columns: [
-      {
-        id: 'hong_hoc_can_sua',
-        header: 'Hỏng hóc cần sửa:',
-        groupKey: 'sua_chua',
-        placeholder: 'Thiết bị điện, nước, âm thanh, điều hòa cần bảo trì...',
-        example: 'Không có',
-      },
-      {
-        id: 'hang_muc_sua_trong_ngay',
-        header: 'Hạng mục sửa trong ngày:',
-        groupKey: 'sua_chua',
-        placeholder: 'Các thiết bị đã sửa chữa xong trong ngày...',
-        example: 'Bảo dưỡng định kỳ',
       },
     ],
   },

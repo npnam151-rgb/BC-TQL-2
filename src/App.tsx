@@ -390,29 +390,29 @@ function doPost(e) {
 
     // 5. BÁO CÁO TQL (6 CƠ SỞ - PHƯƠNG ÁN 1: 38 CỘT CHUẨN)
     else if (sheetName === "BC TQL" || sheetName === "BC TQL 1" || sheetName === "Sheet17") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (38 CỘT CHUẨN)
+      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (38 CỘT CHUẨN A -> AL THEO GOOGLE SHEET)
       if (sheet.getLastRow() === 0) {
         var headersTQL = [
-          "Thời gian gửi", "Ngày", "Người báo cáo",
-          // ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 cột - chỉ dòng đầu tiên 01 DD có giá trị)
+          "Thời gian gửi", "Ngày", "Người báo cáo", // Cột A, B, C
+          // ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 cột D -> J - chỉ dòng đầu tiên 01 DD có giá trị)
           "DT toàn hệ thống:", "Mục tiêu ngày:", "Tăng/giảm so với hôm trc:", "Tổng lượt khách:", "Số bàn phục vụ:", "DT TB/khách:", "Xếp hạng DT:",
-          // CH lv chính (Đưa về sau Đánh giá chung toàn chuỗi theo Phương án 1)
+          // Cột K: CH lv chính
           "CH lv chính",
-          // PHỤC VỤ (8 cột)
-          "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Chương trình KM:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
-          // NHÂN SỰ (5 cột)
-          "Tổng NS bàn đi làm:", "NS nghỉ đột xuất:", "NS nghỉ hẳn:", "NS mới:", "NS hỗ trợ:",
-          // BIA (4 cột)
-          "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:", "Xuất bán tiệc:",
-          // MÓN ĂN (5 cột)
-          "Món đẩy:", "Món bán chạy:", "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:",
-          // SỬA CHỮA (2 cột)
+          // SỬA CHỮA (2 cột L -> M)
           "Hỏng hóc cần sửa:", "Hạng mục sửa trong ngày:",
-          // ĐÀO TẠO (1 cột)
+          // PHỤC VỤ (8 cột N -> U)
+          "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Chương trình KM:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
+          // NHÂN SỰ (5 cột V -> Z)
+          "Tổng NS bàn đi làm:", "NS nghỉ đột xuất:", "NS nghỉ hẳn:", "NS mới:", "NS hỗ trợ:",
+          // BIA (4 cột AA -> AD)
+          "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:", "Xuất bán tiệc:",
+          // MÓN ĂN (5 cột AE -> AI)
+          "Món đẩy:", "Món bán chạy:", "Phản hồi của khách:", "Vđ phát sinh:", "Cách giải quyết ps:",
+          // ĐÀO TẠO (1 cột AJ)
           "Đào tạo:",
-          // ĐỐI NGOẠI (1 cột)
+          // ĐỐI NGOẠI (1 cột AK)
           "Đối ngoại:",
-          // Ý KIẾN KHÁC (1 cột - thuộc phần Chung toàn chuỗi, đặt ở cuối)
+          // Ý KIẾN KHÁC (1 cột AL - thuộc phần Chung toàn chuỗi, đặt ở cuối)
           "Ý KIẾN KHÁC"
         ];
         sheet.appendRow(headersTQL);
@@ -434,7 +434,7 @@ function doPost(e) {
             reporterVal
           ];
           
-          // 7 cột Đánh giá chung toàn chuỗi
+          // 7 cột Đánh giá chung toàn chuỗi (D -> J)
           if (st.systemValues && Array.isArray(st.systemValues)) {
             st.systemValues.forEach(function(val) {
               storeRow.push(val !== undefined && val !== null ? String(val) : "");
@@ -443,10 +443,10 @@ function doPost(e) {
             for (var s = 0; s < 7; s++) storeRow.push("");
           }
           
-          // Cột CH lv chính (sau Đánh giá chung toàn chuỗi)
+          // Cột K: CH lv chính
           storeRow.push(st.storeCode || st.storeName || "");
           
-          // 26 cột nghiệp vụ từng cơ sở
+          // 26 cột nghiệp vụ từng cơ sở (L -> AK: Sửa chữa, Phục vụ, Nhân sự, Bia, Món ăn, Đào tạo, Đối ngoại)
           if (st.storeValues && Array.isArray(st.storeValues)) {
             st.storeValues.forEach(function(val) {
               storeRow.push(val !== undefined && val !== null ? String(val) : "");
@@ -460,7 +460,7 @@ function doPost(e) {
             for (var stc = 0; stc < 26; stc++) storeRow.push("");
           }
 
-          // Cột Ý KIẾN KHÁC (ở cuối bảng)
+          // Cột AL: Ý KIẾN KHÁC (ở cuối bảng)
           storeRow.push(st.otherOpinionValue !== undefined && st.otherOpinionValue !== null ? String(st.otherOpinionValue) : "");
 
           sheet.appendRow(storeRow);
@@ -473,12 +473,20 @@ function doPost(e) {
           "dt_toan_he_thong", "muc_tieu_ngay", "tang_giam_hom_truoc", "tong_luot_khach", "so_ban_phuc_vu", "dt_tb_khach", "xep_hang_dt"
         ];
         var storeKeys = [
-          "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "chuong_trinh_km", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
-          "tong_ns_di_lam", "ns_nghi_dot_xuat", "ns_nghi_han", "ns_moi", "ns_ho_tro",
-          "phan_hoi_khach_bia", "vd_phat_sinh_bia", "cach_giai_quyet_bia", "xuat_ban_tiec",
-          "mon_day", "mon_ban_chay", "phan_hoi_khach_mon", "vd_phat_sinh_mon", "cach_giai_quyet_mon",
+          // SỬA CHỮA (2 cột: L, M)
           "hong_hoc_can_sua", "hang_muc_sua_trong_ngay",
-          "dao_tao", "doi_ngoai"
+          // PHỤC VỤ (8 cột: N -> U)
+          "xep_ban", "order_tu_van", "cham_soc_upsell", "toc_do_ra_do", "chuong_trinh_km", "ve_sinh", "vd_phat_sinh_pv", "cach_giai_quyet_pv",
+          // NHÂN SỰ (5 cột: V -> Z)
+          "tong_ns_di_lam", "ns_nghi_dot_xuat", "ns_nghi_han", "ns_moi", "ns_ho_tro",
+          // BIA (4 cột: AA -> AD)
+          "phan_hoi_khach_bia", "vd_phat_sinh_bia", "cach_giai_quyet_bia", "xuat_ban_tiec",
+          // MÓN ĂN (5 cột: AE -> AI)
+          "mon_day", "mon_ban_chay", "phan_hoi_khach_mon", "vd_phat_sinh_mon", "cach_giai_quyet_mon",
+          // ĐÀO TẠO (1 cột: AJ)
+          "dao_tao",
+          // ĐỐI NGOẠI (1 cột: AK)
+          "doi_ngoai"
         ];
         var sysVals = data.systemEvaluation || {};
         storeCodes.forEach(function(code, idx) {
@@ -495,15 +503,15 @@ function doPost(e) {
             }
           });
 
-          // Cột CH lv chính
+          // Cột CH lv chính (K)
           storeRow.push(code);
 
-          // 26 cột nghiệp vụ cơ sở
+          // 26 cột nghiệp vụ cơ sở (L -> AK)
           storeKeys.forEach(function(k) {
             storeRow.push(storeVals[k] !== undefined ? String(storeVals[k]) : "");
           });
 
-          // Cột Ý KIẾN KHÁC (ở cuối bảng): chỉ ghi ở dòng đầu tiên (01 DD)
+          // Cột Ý KIẾN KHÁC (AL): chỉ ghi ở dòng đầu tiên (01 DD)
           if (idx === 0) {
             storeRow.push(sysVals.y_kien_khac ? String(sysVals.y_kien_khac) : "");
           } else {
