@@ -247,14 +247,29 @@ export default function App() {
     }
   };
 
-  const fullAppsScriptCode = `function doPost(e) {
+  const fullAppsScriptCode = `function doGet(e) {
+  return ContentService.createTextOutput("Web App is running!").setMimeType(ContentService.MimeType.TEXT);
+}
+
+function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
     
-    // Tên sheet đích chuẩn cố định là "BC TQL"
+    // Tên sheet gửi từ app
     var sheetName = data.sheetName || "BC TQL"; 
     var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
     var sheet = spreadsheet.getSheetByName(sheetName);
+    
+    // Tìm kiếm sheet không phân biệt chữ hoa/thường
+    if (!sheet) {
+      var sheets = spreadsheet.getSheets();
+      for (var s = 0; s < sheets.length; s++) {
+        if (sheets[s].getName().trim().toLowerCase() === sheetName.trim().toLowerCase()) {
+          sheet = sheets[s];
+          break;
+        }
+      }
+    }
     
     // Tự động tạo sheet nếu chưa có
     if (!sheet) {
@@ -263,9 +278,53 @@ export default function App() {
     
     var row = [];
 
+    // =========================================================================
     // XỬ LÝ THEO TỪNG LOẠI BẢNG
-    if (sheetName === "BC CX") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG
+    // =========================================================================
+
+    // 1. BÁO CÁO SALE SỈ
+    if (sheetName === "BC sale sỉ" || sheetName === "BC Sale sỉ" || sheetName === "BC Sale Sỉ") {
+      if (sheet.getLastRow() === 0) {
+        var headersSaleSi = [
+          "Thời gian gửi",            // Cột A
+          "Ngày",                     // Cột B
+          "Người báo cáo",            // Cột C
+          "Điểm mở mới",              // Cột D
+          "Phát sinh/ Đề xuất",       // Cột E
+          "Tổng số điểm đến chăm sóc", // Cột F
+          "Tổng số đơn đặt hàng"      // Cột G
+        ];
+        for (var i = 1; i <= 15; i++) {
+          headersSaleSi.push("Điểm bán số " + i);
+        }
+        sheet.appendRow(headersSaleSi);
+        sheet.getRange(1, 1, 1, headersSaleSi.length).setFontWeight("bold").setBackground("#f3f4f6");
+        sheet.setFrozenRows(1);
+      }
+      
+      row.push(
+        new Date(),
+        data.date || "",
+        data.reporter || "",
+        data.newOutlets || "",
+        data.issuesOrProposals || "",
+        data.visitedOutlets || "", 
+        data.totalOrders || ""     
+      );
+      
+      if (data.outlets && Array.isArray(data.outlets)) {
+        for (var i = 0; i < 15; i++) {
+          row.push(data.outlets[i] !== undefined ? data.outlets[i] : "");
+        }
+      } else if (data.items && Array.isArray(data.items)) {
+        for (var i = 0; i < 15; i++) {
+          row.push(data.items[i] ? (data.items[i].value || "") : "");
+        }
+      }
+    } 
+
+    // 2. BÁO CÁO CX
+    else if (sheetName === "BC CX") {
       if (sheet.getLastRow() === 0) {
         var headers = ["Thời gian gửi", "Cơ sở", "Ngày", "Người báo cáo", "Tổng điểm"];
         if (data.items && data.items.length > 0) {
@@ -278,8 +337,6 @@ export default function App() {
         sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f4f6");
         sheet.setFrozenRows(1);
       }
-      
-      // 2. GHI DỮ LIỆU CỦA báo cáo CX
       row.push(new Date(), data.location, data.date, data.reporter, data.totalScore);
       if (data.items && data.items.length > 0) {
         data.items.forEach(function(item) {
@@ -288,8 +345,9 @@ export default function App() {
         });
       }
     } 
+
+    // 3. BÁO CÁO BAR
     else if (sheetName === "BC Bar" || sheetName === "BC Bar 1") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG
       if (sheet.getLastRow() === 0) {
         var headersBar = ["Thời gian gửi", "Cơ sở", "Ngày", "Người báo cáo"];
         if (data.items && data.items.length > 0) {
@@ -301,17 +359,16 @@ export default function App() {
         sheet.getRange(1, 1, 1, headersBar.length).setFontWeight("bold").setBackground("#f3f4f6");
         sheet.setFrozenRows(1);
       }
-      
-      // 2. GHI DỮ LIỆU CỦA báo cáo BAR
       row.push(new Date(), data.location, data.date, data.reporter);
       if (data.items && data.items.length > 0) {
         data.items.forEach(function(item) {
-          row.push(item.value); 
+          row.push(item.value);
         });
       }
     }
+
+    // 4. BÁO CÁO TỔNG BAR
     else if (sheetName === "BC Tổng Bar") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG
       if (sheet.getLastRow() === 0) {
         var headersLam = ["Thời gian gửi", "Cơ sở"];
         if (data.items && data.items.length > 0) {
@@ -323,8 +380,6 @@ export default function App() {
         sheet.getRange(1, 1, 1, headersLam.length).setFontWeight("bold").setBackground("#f3f4f6");
         sheet.setFrozenRows(1);
       }
-      
-      // 2. GHI DỮ LIỆU CỦA báo cáo Lâm
       row.push(new Date(), data.location);
       if (data.items && data.items.length > 0) {
         data.items.forEach(function(item) {
@@ -332,15 +387,16 @@ export default function App() {
         });
       }
     }
-    // ================== BÁO CÁO TQL - 6 CƠ SỞ (SHEET17 / BC TQL) ==================
-    else if (sheetName === "Sheet17" || sheetName === "BC TQL" || sheetName === "BC TQL 1") {
-      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (38 CỘT: 3 CỘT ĐẦU + 7 CỘT TOÀN CHUỖI + 1 CỘT CƠ SỞ + 26 CỘT NGHIỆP VỤ + 1 CỘT Ý KIẾN KHÁC)
+
+    // 5. BÁO CÁO TQL (6 CƠ SỞ - PHƯƠNG ÁN 1: 38 CỘT CHUẨN)
+    else if (sheetName === "BC TQL" || sheetName === "BC TQL 1" || sheetName === "Sheet17") {
+      // 1. TẠO TIÊU ĐỀ NẾU BẢNG TRỐNG (38 CỘT CHUẨN)
       if (sheet.getLastRow() === 0) {
         var headersTQL = [
           "Thời gian gửi", "Ngày", "Người báo cáo",
-          // ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 cột - đã xóa cột trùng)
+          // ĐÁNH GIÁ CHUNG TOÀN CHUỖI (7 cột - chỉ dòng đầu tiên 01 DD có giá trị)
           "DT toàn hệ thống:", "Mục tiêu ngày:", "Tăng/giảm so với hôm trc:", "Tổng lượt khách:", "Số bàn phục vụ:", "DT TB/khách:", "Xếp hạng DT:",
-          // CH lv chính (Đưa về SAU Đánh giá chung toàn chuỗi)
+          // CH lv chính (Đưa về sau Đánh giá chung toàn chuỗi theo Phương án 1)
           "CH lv chính",
           // PHỤC VỤ (8 cột)
           "Xếp bàn và đón tiếp:", "Order & tư vấn món:", "Chăm sóc KH & upsell:", "Tốc độ ra đồ:", "Chương trình KM:", "Vệ sinh:", "Vđ phát sinh:", "Cách giải quyết ps:",
@@ -356,7 +412,7 @@ export default function App() {
           "Đào tạo:",
           // ĐỐI NGOẠI (1 cột)
           "Đối ngoại:",
-          // Ý KIẾN KHÁC (1 cột - thuộc phần Chung toàn chuỗi, gộp ô ở cuối)
+          // Ý KIẾN KHÁC (1 cột - thuộc phần Chung toàn chuỗi, đặt ở cuối)
           "Ý KIẾN KHÁC"
         ];
         sheet.appendRow(headersTQL);
@@ -368,7 +424,8 @@ export default function App() {
       var timeVal = data.time || Utilities.formatDate(new Date(), "GMT+7", "HH:mm");
       var dateVal = data.date || Utilities.formatDate(new Date(), "GMT+7", "yyyy-MM-dd");
       var reporterVal = data.reporter || "";
-      
+
+      // TH1: Dữ liệu gửi từ App dạng mảng storesList (6 cơ sở)
       if (data.storesList && Array.isArray(data.storesList) && data.storesList.length > 0) {
         data.storesList.forEach(function(st) {
           var storeRow = [
@@ -380,8 +437,10 @@ export default function App() {
           // 7 cột Đánh giá chung toàn chuỗi
           if (st.systemValues && Array.isArray(st.systemValues)) {
             st.systemValues.forEach(function(val) {
-              storeRow.push(val !== undefined ? String(val) : "");
+              storeRow.push(val !== undefined && val !== null ? String(val) : "");
             });
+          } else {
+            for (var s = 0; s < 7; s++) storeRow.push("");
           }
           
           // Cột CH lv chính (sau Đánh giá chung toàn chuỗi)
@@ -390,22 +449,25 @@ export default function App() {
           // 26 cột nghiệp vụ từng cơ sở
           if (st.storeValues && Array.isArray(st.storeValues)) {
             st.storeValues.forEach(function(val) {
-              storeRow.push(val !== undefined ? String(val) : "");
+              storeRow.push(val !== undefined && val !== null ? String(val) : "");
             });
           } else if (st.values && Array.isArray(st.values)) {
-            st.values.forEach(function(val) {
-              storeRow.push(val !== undefined ? String(val) : "");
-            });
+            // st.values gồm: 7 system + 26 store + 1 otherOpinion
+            for (var v = 7; v < st.values.length - 1; v++) {
+              storeRow.push(st.values[v] !== undefined && st.values[v] !== null ? String(st.values[v]) : "");
+            }
+          } else {
+            for (var stc = 0; stc < 26; stc++) storeRow.push("");
           }
 
           // Cột Ý KIẾN KHÁC (ở cuối bảng)
-          if (st.otherOpinionValue !== undefined) {
-            storeRow.push(String(st.otherOpinionValue));
-          }
+          storeRow.push(st.otherOpinionValue !== undefined && st.otherOpinionValue !== null ? String(st.otherOpinionValue) : "");
 
           sheet.appendRow(storeRow);
         });
-      } else if (data.stores) {
+      } 
+      // TH2: Fallback nếu gửi dạng data.stores object
+      else if (data.stores) {
         var storeCodes = ["01 DD", "03 NVH", "12 ĐT", "94 LĐ", "96 HT", "98 VTP"];
         var systemKeys = [
           "dt_toan_he_thong", "muc_tieu_ngay", "tang_giam_hom_truoc", "tong_luot_khach", "so_ban_phuc_vu", "dt_tb_khach", "xep_hang_dt"
@@ -422,29 +484,42 @@ export default function App() {
         storeCodes.forEach(function(code, idx) {
           var storeVals = data.stores[code] || {};
           var storeRow = [timeVal, dateVal, reporterVal];
+          
           // 7 cột toàn chuỗi: chỉ ghi ở dòng đầu tiên (01 DD) theo Phương án 1
           systemKeys.forEach(function(k) {
             if (idx === 0) {
               var val = sysVals[k] !== undefined ? sysVals[k] : (storeVals[k] !== undefined ? storeVals[k] : "");
-              storeRow.push(String(val));
+              storeRow.push(String(val || ""));
             } else {
               storeRow.push("");
             }
           });
-          // Cột CH lv chính (sau Đánh giá chung toàn chuỗi)
+
+          // Cột CH lv chính
           storeRow.push(code);
-          // 25 cột nghiệp vụ cơ sở
+
+          // 26 cột nghiệp vụ cơ sở
           storeKeys.forEach(function(k) {
             storeRow.push(storeVals[k] !== undefined ? String(storeVals[k]) : "");
           });
+
           // Cột Ý KIẾN KHÁC (ở cuối bảng): chỉ ghi ở dòng đầu tiên (01 DD)
           if (idx === 0) {
             storeRow.push(sysVals.y_kien_khac ? String(sysVals.y_kien_khac) : "");
           } else {
             storeRow.push("");
           }
+
           sheet.appendRow(storeRow);
         });
+      } 
+      // TH3: Fallback tương thích ngược nếu gửi data.items
+      else if (data.items && Array.isArray(data.items)) {
+        var legacyRow = [new Date(), data.date || "", data.reporter || "", data.location || ""];
+        data.items.forEach(function(item) {
+          legacyRow.push(item.value || "");
+        });
+        sheet.appendRow(legacyRow);
       }
 
       return ContentService.createTextOutput(JSON.stringify({
@@ -452,47 +527,8 @@ export default function App() {
         "message": "Đã lưu 6 cơ sở vào " + sheetName
       })).setMimeType(ContentService.MimeType.JSON);
     }
-    // ================== BÁO CÁO SALE SỈ ==================
-    else if (sheetName === "BC sale sỉ" || sheetName === "BC Sale sỉ" || sheetName === "BC Sale Sỉ") {
-      if (sheet.getLastRow() === 0) {
-        var headersSaleSi = [
-          "Thời gian gửi",
-          "Ngày",
-          "Người báo cáo",
-          "Điểm mở mới",
-          "Phát sinh/ Đề xuất",
-          "Tổng số điểm đến chăm sóc",
-          "Tổng số đơn đặt hàng"
-        ];
-        for (var i = 1; i <= 15; i++) {
-          headersSaleSi.push("Điểm bán số " + i);
-        }
-        sheet.appendRow(headersSaleSi);
-        sheet.getRange(1, 1, 1, headersSaleSi.length).setFontWeight("bold").setBackground("#f3f4f6");
-        sheet.setFrozenRows(1);
-      }
-      
-      row.push(
-        new Date(),
-        data.date || "",
-        data.reporter || "",
-        data.newOutlets || "",
-        data.issuesOrProposals || "",
-        data.visitedOutlets || "",
-        data.totalOrders || ""
-      );
-      
-      if (data.outlets && Array.isArray(data.outlets)) {
-        for (var i = 0; i < 15; i++) {
-          row.push(data.outlets[i] !== undefined ? data.outlets[i] : "");
-        }
-      } else if (data.items && Array.isArray(data.items)) {
-        for (var i = 0; i < 15; i++) {
-          row.push(data.items[i] ? (data.items[i].value || "") : "");
-        }
-      }
-    }
-    // ================== BÁO CÁO BẾP ==================
+
+    // 6. BÁO CÁO BẾP
     else if (sheetName === "BC Bếp") {
       if (sheet.getLastRow() === 0) {
         var headersBep = [
@@ -518,7 +554,7 @@ export default function App() {
         data.items.forEach(function(item) {
           if (item.id === 201 || item.id === 202 || item.id === 204) {
             var val = (item.value || "").trim();
-            var separatorIndex = val.search(/[\.\\,\\-\\n]/);
+            var separatorIndex = val.search(/[\\.\\,\\-\\n]/);
             
             if (separatorIndex !== -1 && separatorIndex < 15) { 
                var answer = val.substring(0, separatorIndex).trim();
@@ -536,7 +572,45 @@ export default function App() {
       }
     }
 
-    // Ghi dữ liệu dòng mới vào bảng tính nếu có
+    // 7. BÁO CÁO VẬN HÀNH (BC Vận hành) - 22 CỘT CHUẨN (A -> V)
+    else if (sheetName === "BC Vận hành" || sheetName === "BC vận hành") {
+      if (sheet.getLastRow() === 0) {
+        var row1 = ["", "", "", "", "NHÂN SỰ", "", "", "", "", "", "SỬA CHỮA", "", "KINH DOANH", "", "", "", "", "", "", "", "", ""];
+        sheet.appendRow(row1);
+        
+        sheet.getRange("E1:J1").mergeAcross().setHorizontalAlignment("center").setFontWeight("bold").setBackground("#fff2cc");
+        sheet.getRange("K1:L1").mergeAcross().setHorizontalAlignment("center").setFontWeight("bold").setBackground("#ffe599");
+        sheet.getRange("M1:V1").mergeAcross().setHorizontalAlignment("center").setFontWeight("bold").setBackground("#fff2cc");
+        
+        var row2 = [
+          "Thời gian gửi", "Cơ Sở", "Ngày", "Người báo cáo",
+          "Nhân viên mới", "Nhân viên nghỉ việc (đột xuất/nghỉ hẳn/cho nghỉ)", "Số lượng nhân viên làm trong ngày", "Nhân viên vi phạm quy định", "Số lượng nv ngủ tại CH", "Đào tạo nhân viên",
+          "Thiết bị, hạng mục cần sửa chữa", "Thiết bị đã sửa trong ngày",
+          "Món ăn bán chạy trong ngày", "Món lên chậm nhất", "Phản hồi không tốt của KH", "Số bill chênh lệch tạm tính và thanh toán", "CTKM áp dụng trong ngày", 
+          "Hoạt động offline trong ngày", "Xuất bán đơn khách tiệc", "Số lượng Thành viên tích điểm/ tổng bill",
+          "Phát sinh bất thường trong ngày", "Đề xuất"
+        ];
+        sheet.appendRow(row2);
+        
+        var headerRange = sheet.getRange("A2:V2");
+        headerRange.setFontWeight("bold").setHorizontalAlignment("center").setVerticalAlignment("middle").setWrap(true);
+        
+        sheet.getRange("A1:A2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center").setFontWeight("bold");
+        sheet.getRange("B1:B2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center").setFontWeight("bold");
+        sheet.getRange("C1:C2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center").setFontWeight("bold");
+        sheet.getRange("D1:D2").merge().setVerticalAlignment("middle").setHorizontalAlignment("center").setFontWeight("bold");
+        sheet.setFrozenRows(2);
+      }
+
+      row.push(new Date(), data.location, data.date || "", data.reporter || "");
+      if (data.items && data.items.length > 0) {
+        data.items.forEach(function(item) {
+          row.push(item.value);
+        });
+      }
+    }
+
+    // Ghi dữ liệu dòng mới vào bảng tính nếu có (cho các báo cáo dạng đơn)
     if (row && row.length > 0) {
       sheet.appendRow(row);
     }
